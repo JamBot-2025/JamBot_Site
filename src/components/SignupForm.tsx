@@ -91,38 +91,24 @@ export const SignupForm: React.FC<SignupFormProps> = ({
     setSubmitSuccess(null);
     if (validateForm()) {
       try {
-        // Check if email already exists
-        console.log('Checking for existing email:', formData.email);
-        const { data: existing, error: fetchError } = await supabase
-          .from('signups')
-          .select('id')
-          .ilike('email', formData.email)
-          .maybeSingle();
-        console.log('Existing user:', existing, 'Fetch error:', fetchError);
 
-        if (fetchError) {
-          setSubmitError('Error checking for existing account.');
-          return;
-        }
-        if (existing) {
-          setSubmitError('An account with this email already exists.');
-          return;
-        } // Do not proceed to subscription page
-
-        // Insert into Supabase 'Signups' table
-        const { error } = await supabase.from('signups').insert([
-          {
-            email: formData.email,
-            name: formData.name,
-            phone_number: formData.phoneNumber
+        // Use Supabase Auth signUp (handles email verification automatically)
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+              phone_number: formData.phoneNumber
+            }
           }
-        ]);
-        if (error) {
-          setSubmitError(error.message);
-        } else {
-          setSubmitSuccess('Signup successful!');
-          setFormData({ name: '', email: '', password: '', phoneNumber: '' });
+        });
+        if (signUpError) {
+          setSubmitError(signUpError.message);
+          return;
         }
+        setSubmitSuccess('Check your email to verify your account.');
+        setFormData({ name: '', email: '', password: '', phoneNumber: '' });
       } catch (err: any) {
         setSubmitError(err.message || 'An unexpected error occurred.');
       }
