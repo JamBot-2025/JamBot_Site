@@ -13,9 +13,11 @@
     "@stripe/react-stripe-js": "latest",
     "@stripe/stripe-js": "latest",
     "@supabase/supabase-js": "^2.50.2",
+    "@types/react-router-dom": "^5.3.3",
     "lucide-react": "^0.441.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.6.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.18",

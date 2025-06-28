@@ -84,18 +84,37 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     setSubmitSuccess(null);
     if (validateForm()) {
       try {
+        // Check if email already exists
+        console.log('Checking for existing email:', formData.email);
+        const { data: existing, error: fetchError } = await supabase
+          .from('signups')
+          .select('id')
+          .ilike('email', formData.email)
+          .maybeSingle();
+        console.log('Existing user:', existing, 'Fetch error:', fetchError);
+
+        if (fetchError) {
+          setSubmitError('Error checking for existing account.');
+          return;
+        }
+        if (existing) {
+          setSubmitError('An account with this email already exists.');
+          return;
+        } // Do not proceed to subscription page
+
         // Insert into Supabase 'Signups' table
-        const { error } = await supabase.from('Signups').insert([
+        const { error } = await supabase.from('signups').insert([
           {
             email: formData.email,
-            Name: formData.name,
-            "Phone Number": formData.phoneNumber
+            name: formData.name,
+            phone_number: formData.phoneNumber
           }
         ]);
         if (error) {
@@ -107,7 +126,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       } catch (err: any) {
         setSubmitError(err.message || 'An unexpected error occurred.');
       }
-      if (onSubmit) onSubmit(formData);
+      // Only call onSubmit if signup succeeded
+        if (onSubmit && !submitError) onSubmit(formData);
     }
   };
   const openTerms = (e: React.MouseEvent) => {
