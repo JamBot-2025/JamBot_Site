@@ -7,16 +7,10 @@ import { supabase } from '../supabaseClient';
 
 
 interface SignupFormProps {
-  onSubmit?: (data: {
-    name: string;
-    email: string;
-    password: string;
-    phoneNumber: string;
-  }) => void; // onSubmit now optional, and includes phoneNumber
+  onLoginSuccess?: () => void;
 }
-export const SignupForm: React.FC<SignupFormProps> = ({
-  onSubmit
-}) => {
+
+export const SignupForm: React.FC<SignupFormProps> = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -91,9 +85,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({
     setSubmitSuccess(null);
     if (validateForm()) {
       try {
-
         // Use Supabase Auth signUp (handles email verification automatically)
-        const { error: signUpError } = await supabase.auth.signUp({
+        const {error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
@@ -103,17 +96,19 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             }
           }
         });
+
         if (signUpError) {
-          setSubmitError(signUpError.message);
+          // Will always show a generic message
+          setSubmitSuccess('Check your email to verify your account.');
+          setFormData({ name: '', email: '', password: '', phoneNumber: '' });
           return;
         }
+
         setSubmitSuccess('Check your email to verify your account.');
         setFormData({ name: '', email: '', password: '', phoneNumber: '' });
       } catch (err: any) {
         setSubmitError(err.message || 'An unexpected error occurred.');
       }
-      // Only call onSubmit if signup succeeded
-        if (onSubmit && !submitError) onSubmit(formData);
     }
   };
   const openTerms = (e: React.MouseEvent) => {
@@ -155,7 +150,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       <div>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
-            {/* You can use a phone icon if desired */}
             <span role="img" aria-label="Phone">📞</span>
           </div>
           <input

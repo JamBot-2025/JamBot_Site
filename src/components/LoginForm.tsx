@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { MailIcon, LockIcon } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+
 interface LoginFormProps {
-  onSubmit: (data: {
-    email: string;
-    password: string;
-  }) => void;
+  onLoginSuccess?: () => void;
 }
-export const LoginForm: React.FC<LoginFormProps> = ({
-  onSubmit
-}) => {
+
+export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -17,23 +15,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     email: '',
     password: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
     // Clear error when user types
     if (errors[name as keyof typeof errors]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    setAuthError(null);
   };
+
   const validateForm = () => {
     let isValid = true;
     const newErrors = {
@@ -54,19 +48,39 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setErrors(newErrors);
     return isValid;
   };
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
+    setAuthError(null);
+    if (!validateForm()) return;
+    setLoading(true);
+    const { email, password } = formData;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      setAuthError(null);
+      if (onLoginSuccess) onLoginSuccess();
     }
+    setLoading(false);
   };
-  return <form onSubmit={handleSubmit} className="space-y-4">
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
             <MailIcon size={18} />
           </div>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Email address" />
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            placeholder="Email address"
+            disabled={loading}
+          />
         </div>
         {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
       </div>
@@ -75,10 +89,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
             <LockIcon size={18} />
           </div>
-          <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Password" />
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            placeholder="Password"
+            disabled={loading}
+          />
         </div>
         {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
       </div>
+      {authError && <div className="text-red-500 text-sm text-center">{authError}</div>}
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
@@ -92,8 +115,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </a>
         </div>
       </div>
-      <button type="submit" className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900">
-        Sign In
+      <button
+        type="submit"
+        className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+        disabled={loading}
+      >
+        {loading ? 'Signing In...' : 'Sign In'}
       </button>
       <div className="mt-4 text-center text-sm text-white/50">
         Don't have an account?{' '}
@@ -101,5 +128,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           Sign up
         </a>
       </div>
-    </form>;
+    </form>
+  );
 };
