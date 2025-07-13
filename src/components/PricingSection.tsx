@@ -1,5 +1,7 @@
 import React from 'react';
 import { CheckIcon, ZapIcon, TagIcon, ArrowRightIcon } from 'lucide-react';
+import { StripeCheckoutButton } from './StripeCheckoutButton';
+
 export const PricingSection = () => {
   const features = ['5 projects', '10GB storage', 'Basic analytics', 'Email support', 'Access to all core features', 'Regular updates'];
   return <section id="pricing" className="w-full bg-black py-20 relative overflow-hidden">
@@ -67,10 +69,10 @@ export const PricingSection = () => {
                     </li>)}
                 </ul>
               </div>
-              <button className="w-full py-4 rounded-lg text-white font-medium transition-all bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90 text-lg flex items-center justify-center">
-                Preorder Now
-                <ArrowRightIcon size={20} className="ml-2" />
-              </button>
+              <StripeCheckoutButton
+                customerId={"cus_example123"} // TODO: Replace with real customerId from user context
+                priceId={"price_1RkWlkB4eW6h7F0TzqtG61CI"} // TODO: Replace with real priceId for your plan
+              />
               <div className="mt-4 text-center">
                 <p className="text-white/50 text-sm">
                   Limited spots available. Offer ends soon.

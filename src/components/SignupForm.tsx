@@ -101,11 +101,43 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onLoginSuccess }) => {
           // Will always show a generic message
           setSubmitSuccess('Check your email to verify your account.');
           setFormData({ name: '', email: '', password: '', phoneNumber: '' });
+          // Call signup-hook to create Stripe customer and update profiles
+          try {
+            const { data } = await supabase.auth.getUser();
+            const userId = data.user?.id;
+            await fetch("https://mcsqxmsvyckabbgefixy.functions.supabase.co/signup-hook", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: userId,
+                email: formData.email,
+                name: formData.name
+              }),
+            });
+          } catch (err) {
+            setSubmitError("Account created, but failed to create Stripe customer. Please contact support if you have issues subscribing.");
+          }
           return;
         }
 
         setSubmitSuccess('Check your email to verify your account.');
         setFormData({ name: '', email: '', password: '', phoneNumber: '' });
+        // Call signup-hook to create Stripe customer and update profiles
+        try {
+          const { data } = await supabase.auth.getUser();
+          const userId = data.user?.id;
+          await fetch("https://mcsqxmsvyckabbgefixy.functions.supabase.co/signup-hook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: userId,
+              email: formData.email,
+              name: formData.name
+            }),
+          });
+        } catch (err) {
+          setSubmitError("Account created, but failed to create Stripe customer. Please contact support if you have issues subscribing.");
+        }
       } catch (err: any) {
         setSubmitError(err.message || 'An unexpected error occurred.');
       }

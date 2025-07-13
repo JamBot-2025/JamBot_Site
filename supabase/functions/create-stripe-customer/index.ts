@@ -1,32 +1,50 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@12.16.0?target=deno";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+  apiVersion: "2023-10-16",
+});
 
-console.log("Hello from Functions!")
-
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+serve(async (req) => {
+  if (req.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
   }
 
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
+  const { email, name, user_id } = await req.json();
 
-/* To invoke locally:
+  // 1. Create Stripe Customer
+  let customer;
+  try {
+    customer = await stripe.customers.create({
+      email,
+      name,
+      metadata: { user_id }
+    });
+  } catch (err) {
+    console.error("Stripe customer creation failed:", err);
+    return new Response("Stripe customer creation failed", { status: 500 });
+  }
 
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
+  // 2. Store Stripe customer ID in Supabase
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/create-stripe-customer' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
 
-*/
+  const { createClient } = await import("https://esm.sh/@supabase/supabase-js");
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ stripe_customer_id: customer.id })
+    .eq("id", user_id);
+
+  if (error) {
+    console.error("Failed to update Supabase profile:", error);
+    return new Response("Supabase update failed", { status: 500 });
+  }
+
+  return new Response(JSON.stringify({ customer_id: customer.id }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
+  });
+});
