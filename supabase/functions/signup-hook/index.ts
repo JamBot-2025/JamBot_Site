@@ -5,7 +5,7 @@ function withCorsHeaders(res: Response) {
   const headers = new Headers(res.headers);
   headers.set("Access-Control-Allow-Origin", "*");
   headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey");
+  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey, x-client-info");
   return new Response(res.body, {
     status: res.status,
     statusText: res.statusText,
@@ -41,8 +41,11 @@ serve(async (req) => {
   }
 
   // 2. Update profiles table
-  const supabaseUrl = Deno.env.get("PROJECT_URL")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  // DEBUG: Log env vars (do NOT log secrets in production)
+  console.log("supabaseUrl:", supabaseUrl);
+  console.log("supabaseKey:", supabaseKey);
   const response = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
     method: "PATCH",
     headers: {
