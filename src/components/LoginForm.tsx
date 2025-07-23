@@ -6,6 +6,8 @@ interface LoginFormProps {
   onLoginSuccess?: () => void;
 }
 
+import { useNavigate } from 'react-router-dom';
+
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -17,6 +19,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -60,74 +63,84 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       setAuthError(error.message);
     } else {
       setAuthError(null);
+      navigate('/account');
       if (onLoginSuccess) onLoginSuccess();
     }
     setLoading(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
-            <MailIcon size={18} />
+    <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4">
+      <div className="relative bg-gradient-to-br from-black/70 to-gray-900/80 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-8 mx-4">
+        <h2 className="text-2xl font-bold text-center text-white mb-6">Log In</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
+                <MailIcon size={18} />
+              </div>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Email address"
+                disabled={loading}
+              />
+            </div>
+            {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
           </div>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            placeholder="Email address"
-            disabled={loading}
-          />
-        </div>
-        {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
-      </div>
-      <div>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
-            <LockIcon size={18} />
+          <div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
+                <LockIcon size={18} />
+              </div>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Password"
+                disabled={loading}
+              />
+            </div>
+            {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
           </div>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            placeholder="Password"
+          {authError && <div className="text-red-500 text-sm text-center">{authError}</div>}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-white/70">
+                Remember me
+              </label>
+            </div>
+            <div className="text-sm">
+              <a href="#" className="text-purple-400 hover:text-purple-300">
+                Forgot password?
+              </a>
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900"
             disabled={loading}
-          />
-        </div>
-        {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+          >
+            {loading ? 'Logging In...' : 'Log In'}
+          </button>
+          <div className="mt-4 text-center text-sm text-white/50">
+            Don't have an account?{' '}
+            <button
+              type="button"
+              className="text-purple-400 hover:text-purple-300 underline bg-transparent border-none cursor-pointer"
+              onClick={() => navigate('/signup')}
+            >
+              Sign up
+            </button>
+          </div>
+        </form>
       </div>
-      {authError && <div className="text-red-500 text-sm text-center">{authError}</div>}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-white/70">
-            Remember me
-          </label>
-        </div>
-        <div className="text-sm">
-          <a href="#" className="text-purple-400 hover:text-purple-300">
-            Forgot password?
-          </a>
-        </div>
-      </div>
-      <button
-        type="submit"
-        className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-        disabled={loading}
-      >
-        {loading ? 'Signing In...' : 'Sign In'}
-      </button>
-      <div className="mt-4 text-center text-sm text-white/50">
-        Don't have an account?{' '}
-        <a href="#" className="text-purple-400 hover:text-purple-300">
-          Sign up
-        </a>
-      </div>
-    </form>
+    </div>
   );
 };

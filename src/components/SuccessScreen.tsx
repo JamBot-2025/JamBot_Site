@@ -19,17 +19,12 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
 }) => {
   const [showAccountPage, setShowAccountPage] = useState(false);
   if (showAccountPage) {
-    return <AccountPage userDetails={userDetails} subscriptionDetails={{
-      plan: 'preorder',
-      subscriptionId: subscriptionDetails?.subscriptionId,
-      status: 'active',
-      nextBillingDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString()
-    }} onBack={() => setShowAccountPage(false)} onLogout={onClose} />;
+    return <AccountPage userDetails={userDetails} setUser={setUser} />;
   }
   return <div className="text-center py-6">
       <div className="flex justify-center mb-6">
         <div className="w-20 h-20 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center">
-          <div size={40} className="text-white" />
+          <ZapIcon size={40} className="text-white" />
         </div>
       </div>
       <h2 className="text-2xl font-bold text-white mb-4">

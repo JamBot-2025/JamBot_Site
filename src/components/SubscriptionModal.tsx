@@ -116,10 +116,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     onClose();
   };
 
-  const handleBackFromAccount = () => {
-    onClose();
-  };
-
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 overflow-y-auto">
@@ -169,14 +165,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
               userDetails={{
                 name: user?.user_metadata?.name || user?.user_metadata?.full_name || 'User',
                 email: user?.email || 'user@example.com'
-              }}
-              subscriptionDetails={{
-                plan: 'preorder',
-                status: 'active',
-                nextBillingDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString()
-              }}
-              onBack={handleBackFromAccount}
-              onLogout={onLogout}
+              }} setUser={() => {}}
             />
           )}
           {step === 'payment' && user && (
@@ -209,10 +198,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
               userDetails={{
                 name: user?.user_metadata?.name || user?.user_metadata?.full_name || 'User',
                 email: user?.email || 'user@example.com'
-              }}
-              subscriptionDetails={{
-                email: user?.email || 'user@example.com',
-                subscriptionId: undefined
               }}
             />
           )}

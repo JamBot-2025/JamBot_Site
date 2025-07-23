@@ -1,6 +1,5 @@
 import React from 'react';
 import { CheckIcon, ZapIcon, TagIcon, ArrowRightIcon } from 'lucide-react';
-import { StripeCheckoutButton } from './StripeCheckoutButton';
 
 export const PricingSection = () => {
   const features = ['5 projects', '10GB storage', 'Basic analytics', 'Email support', 'Access to all core features', 'Regular updates'];
@@ -69,10 +68,6 @@ export const PricingSection = () => {
                     </li>)}
                 </ul>
               </div>
-              <StripeCheckoutButton
-                customerId={"cus_example123"} // TODO: Replace with real customerId from user context
-                priceId={"price_1RkWlkB4eW6h7F0TzqtG61CI"} // TODO: Replace with real priceId for your plan
-              />
               <div className="mt-4 text-center">
                 <p className="text-white/50 text-sm">
                   Limited spots available. Offer ends soon.

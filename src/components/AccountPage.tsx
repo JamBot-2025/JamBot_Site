@@ -1,32 +1,80 @@
 import React, { useState } from 'react';
-import { ArrowLeftIcon, CreditCardIcon, UserIcon, LogOutIcon, BellIcon, InfoIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CreditCardIcon, UserIcon, LogOutIcon, BellIcon, InfoIcon } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 interface AccountPageProps {
   userDetails: {
     name: string;
     email: string;
   };
-  subscriptionDetails?: {
-    plan: string | null;
-    subscriptionId?: string;
-    status: 'active' | 'inactive' | 'trial';
-    nextBillingDate: string;
-  };
-  onBack: () => void;
-  onLogout?: () => void;
+  setUser: (user: any) => void;
 }
+
+type Profile = {
+  id: string;
+  name: string | null;
+  subscription_status: 'active' | 'inactive' | 'trial' | null;
+  stripe_customer_id: string | null;
+  subscription_plan: string | null;
+  next_billing_date: string | null;
+};
 export const AccountPage: React.FC<AccountPageProps> = ({
   userDetails,
-  subscriptionDetails,
-  onBack,
-  onLogout
+  setUser
 }) => {
-  const [activeTab, setActiveTab] = useState<'account' | 'subscription'>('account');
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [subscribed, setSubscribed] = React.useState<boolean | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = React.useState<'account' | 'subscription'>('account');
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const user = (window as any).supabase?.auth?.user?.();
+        const userId = user?.id;
+        if (!userId) {
+          setError('No user ID found.');
+          setLoading(false);
+          return;
+        }
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        if (error && error.code !== 'PGRST116') { // 'PGRST116' = no rows found
+          setError('Could not fetch profile.');
+          setProfile(null);
+        } else if (!data) {
+          setProfile(null);
+        } else {
+          setProfile(data as Profile);
+        }
+      } catch (err: any) {
+        if (err.data) {
+          setProfile(err.data);
+          setSubscribed(err.data.subscription_status === 'active');
+        } else {
+          setProfile(null);
+          setSubscribed(false);
+        }
+        setError('Unexpected error fetching profile.');
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, []);
+
   // Get plan name based on selected plan
   const getPlanName = () => {
-    if (subscriptionDetails?.plan === 'preorder') {
+    if (profile?.subscription_plan === 'preorder') {
       return 'Standard Plan (Preorder Special)';
     }
-    switch (subscriptionDetails?.plan) {
+    switch (profile?.subscription_plan) {
       case 'basic':
         return 'Standard Plan';
       case 'pro':
@@ -34,14 +82,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       case 'enterprise':
         return 'Enterprise Plan';
       default:
-        return 'Standard Plan';
+        return profile === null ? 'Never Subscribed' : 'No subscription';
     }
   };
   const getPlanPrice = () => {
-    if (subscriptionDetails?.plan === 'preorder') {
+    if (profile?.subscription_plan === 'preorder') {
       return '$14.99/3 months';
     }
-    switch (subscriptionDetails?.plan) {
+    switch (profile?.subscription_plan) {
       case 'basic':
         return '$7.99/month';
       case 'pro':
@@ -49,37 +97,32 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       case 'enterprise':
         return '$99.99/month';
       default:
-        return '$7.99/month';
+        return profile === null ? '$0' : '$0';
     }
   };
   const getStatusBadge = () => {
-    switch (subscriptionDetails?.status) {
+    switch (profile?.subscription_status) {
       case 'active':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">
-            Active
-          </span>;
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Active</span>;
       case 'trial':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400">
-            Trial
-          </span>;
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400">Trial</span>;
       case 'inactive':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">
-            Inactive
-          </span>;
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Inactive</span>;
       default:
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">
-            Active
-          </span>;
+        return profile === null ? <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Never Subscribed</span> : <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">No subscription</span>;
     }
   };
   return <div className="w-full bg-black">
       {/* Header */}
       <div className="border-b border-white/10 py-4 px-4 sm:px-6 flex justify-between items-center">
-        <button onClick={onBack} className="flex items-center text-white/70 hover:text-white transition-colors">
-          <ArrowLeftIcon size={18} className="mr-2" />
-          <span>Back</span>
-        </button>
-        <button onClick={onLogout} className="flex items-center text-white/70 hover:text-white transition-colors">
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut();
+            setUser(null);
+            navigate('/login');
+          }}
+          className="flex items-center text-white/70 hover:text-white transition-colors"
+        >
           <LogOutIcon size={18} className="mr-2" />
           <span>Log out</span>
         </button>
@@ -115,6 +158,40 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       </div>
       {/* Tab content */}
       <div className="py-6 px-4 sm:px-6">
+        {error === 'No user ID found.' && !profile && (
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="text-white text-lg mb-4">No account found.</div>
+            <a
+              href="/subscribe"
+              className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Subscribe
+            </a>
+          </div>
+        )}
+        {!error && !loading && (
+          <div className="mb-6 flex justify-center">
+            {subscribed ? (
+              <button
+                type="button"
+                onClick={() => navigate('/manageSubscription')}
+                className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Manage Subscription
+              </button>
+            ) : (
+              <a
+                href="/subscribe"
+                className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Subscribe
+              </a>
+            )}
+          </div>
+        )}
+        {error && error !== 'No user ID found.' && (
+          <div className="text-red-400 text-center py-10">{error}</div>
+        )}
         {activeTab === 'account' && <div className="space-y-6">
             <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
               <div className="px-4 py-5 sm:px-6 border-b border-white/10">
@@ -196,155 +273,143 @@ export const AccountPage: React.FC<AccountPageProps> = ({
               </div>
             </div>
           </div>}
-        {activeTab === 'subscription' && <div className="space-y-6">
-            <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-              <div className="px-4 py-5 sm:px-6 border-b border-white/10">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-medium text-white">
-                      Current Plan
-                    </h3>
-                    <p className="mt-1 text-sm text-white/70">
-                      Manage your subscription
-                    </p>
+        {activeTab === 'subscription' && (
+          <div className="space-y-6">
+            {loading ? (
+              <div className="text-white text-center py-10">Loading subscription info...</div>
+            ) : error ? (
+              <div className="text-red-400 text-center py-10">{error}</div>
+            ) : (
+              <>
+                <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
+                  <div className="px-4 py-5 sm:px-6 border-b border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-medium text-white">Current Plan</h3>
+                        <p className="mt-1 text-sm text-white/70">
+                          {profile === null ? 'You have never subscribed.' : 'Manage your subscription'}
+                        </p>
+                      </div>
+                      {getStatusBadge()}
+                    </div>
                   </div>
-                  {getStatusBadge()}
-                </div>
-              </div>
-              <div className="px-4 py-5 sm:p-6">
-                <div className="mb-6">
-                  <h4 className="text-xl font-bold text-white">
-                    {getPlanName()}
-                  </h4>
-                  <p className="text-white/70">{getPlanPrice()}</p>
-                </div>
-                <div className="bg-blue-500/10 rounded-lg p-4 mb-6 border border-blue-500/20">
-                  <div className="flex items-start">
-                    <InfoIcon size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div className="ml-3">
-                      <h5 className="text-white font-medium mb-1">
-                        Billing Information
-                      </h5>
-                      <p className="text-white/80 text-sm">
-                        Your special preorder price of{' '}
-                        <span className="font-medium text-white">$14.99</span>{' '}
-                        covers your first 3 months. After this period, your
-                        subscription will automatically convert to the regular
-                        price of
-                        <span className="font-medium text-white">
-                          {' '}
-                          $7.99/month
+                  <div className="px-4 py-5 sm:p-6">
+                    <div className="mb-6">
+                      <h4 className="text-xl font-bold text-white">{getPlanName()}</h4>
+                      <p className="text-white/70">{getPlanPrice()}</p>
+                    </div>
+                    {profile === null ? (
+                      <div className="mb-6 flex justify-center">
+                        <a
+                          href="/subscribe"
+                          className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                          Subscribe
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="mb-6 flex justify-center">
+                        <a
+                          href="/subscribe"
+                          className={`px-6 py-2 rounded-lg font-semibold transition-colors shadow-md ${profile.subscription_status === 'active' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                        >
+                          {profile.subscription_status === 'active' ? 'Manage Subscription' : 'Subscribe'}
+                        </a>
+                      </div>
+                    )}
+                    {profile && (
+                      <div className="bg-blue-500/10 rounded-lg p-4 mb-6 border border-blue-500/20">
+                        <div className="flex items-start">
+                          <InfoIcon size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                          <div className="ml-3">
+                            <h5 className="text-white font-medium mb-1">Billing Information</h5>
+                            <p className="text-white/80 text-sm">
+                              Your special preorder price of{' '}
+                              <span className="font-medium text-white">$14.99</span>{' '}
+                              covers your first 3 months. After this period, your
+                              subscription will automatically convert to the regular
+                              price of
+                              <span className="font-medium text-white"> $7.99/month</span>, billed monthly.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="bg-white/5 rounded-lg p-4 mb-6">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-white/70">Next billing date</span>
+                        <span className="text-white font-medium">
+                          {profile?.next_billing_date ? new Date(profile.next_billing_date).toLocaleDateString() : 'N/A'}
                         </span>
-                        , billed monthly.
-                      </p>
+                      </div>
+                      {profile && (
+                        <>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-white/70">Plan</span>
+                            <span className="text-white font-medium">{getPlanName()}</span>
+                          </div>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-white/70">Stripe Customer ID</span>
+                            <span className="text-white font-medium">{profile.stripe_customer_id || 'N/A'}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
+                      <button className="text-white/70 hover:text-white text-sm flex items-center">
+                        <CreditCardIcon size={16} className="mr-2" />
+                        Update payment method
+                      </button>
+                      <button className="text-red-400 hover:text-red-300 text-sm">Cancel subscription</button>
                     </div>
                   </div>
                 </div>
-                <div className="bg-white/5 rounded-lg p-4 mb-6">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-white/70">Next billing date</span>
-                    <span className="text-white font-medium">
-                      {subscriptionDetails?.nextBillingDate || 'May 12, 2023'}
-                    </span>
+                <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
+                  <div className="px-4 py-5 sm:px-6 border-b border-white/10">
+                    <h3 className="text-lg font-medium text-white">Billing History</h3>
                   </div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-white/70">Initial period</span>
-                    <span className="text-white font-medium">
-                      3 months ($14.99 total)
-                    </span>
+                  <div className="px-4 py-5 sm:p-6">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-white/10">
+                        <thead>
+                          <tr>
+                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">Date</th>
+                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">Amount</th>
+                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">Status</th>
+                            <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-white/70">Invoice</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10">
+                          <tr>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">Apr 12, 2023</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">{getPlanPrice()}</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm">
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Paid</span>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
+                              <a href="#" className="text-purple-400 hover:text-purple-300">Download</a>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">Mar 12, 2023</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">{getPlanPrice()}</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm">
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Paid</span>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
+                              <a href="#" className="text-purple-400 hover:text-purple-300">Download</a>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-white/70">Subsequent billing</span>
-                    <span className="text-white font-medium">
-                      Monthly ($7.99/month)
-                    </span>
-                  </div>
-                  {subscriptionDetails?.subscriptionId && <div className="flex justify-between text-sm">
-                      <span className="text-white/70">Subscription ID</span>
-                      <span className="text-white font-medium">
-                        {subscriptionDetails.subscriptionId}
-                      </span>
-                    </div>}
                 </div>
-                <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
-                  <button className="text-white/70 hover:text-white text-sm flex items-center">
-                    <CreditCardIcon size={16} className="mr-2" />
-                    Update payment method
-                  </button>
-                  <button className="text-red-400 hover:text-red-300 text-sm">
-                    Cancel subscription
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-              <div className="px-4 py-5 sm:px-6 border-b border-white/10">
-                <h3 className="text-lg font-medium text-white">
-                  Billing History
-                </h3>
-              </div>
-              <div className="px-4 py-5 sm:p-6">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-white/10">
-                    <thead>
-                      <tr>
-                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">
-                          Date
-                        </th>
-                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">
-                          Amount
-                        </th>
-                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">
-                          Status
-                        </th>
-                        <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-white/70">
-                          Invoice
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/10">
-                      <tr>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">
-                          Apr 12, 2023
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">
-                          {getPlanPrice()}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">
-                            Paid
-                          </span>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-                          <a href="#" className="text-purple-400 hover:text-purple-300">
-                            Download
-                          </a>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">
-                          Mar 12, 2023
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">
-                          {getPlanPrice()}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">
-                            Paid
-                          </span>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-                          <a href="#" className="text-purple-400 hover:text-purple-300">
-                            Download
-                          </a>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>;
 };
+export default AccountPage;
