@@ -10,7 +10,14 @@ async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: bo
     .select('subscription_status, subscription_plan, next_billing_date')
     .eq('id', userId)
     .single();
-  if (error || !data) return { subscribed: false };
+  // Handle Supabase 406 (no row found) and treat as not subscribed
+  if ((error && error.code === 'PGRST116') || !data) {
+    return { subscribed: false };
+  }
+  if (error) {
+    // Optionally log or handle other errors
+    return { subscribed: false };
+  }
   return {
     subscribed: data.subscription_status === 'active',
     plan: data.subscription_plan,
@@ -56,10 +63,11 @@ export const SubscribePage: React.FC<SubscribePageProps> = ({ user, authChecked 
   }, [user, navigate]);
 
   const handleSubscribe = async () => {
-  if (!user) {
-    setError("You must be logged in to subscribe.");
-    return;
-  }
+    console.log('Subscription info:', { subscribed, plan, status, nextBillingDate });
+    if (!user) {
+      setError("You must be logged in to subscribe.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

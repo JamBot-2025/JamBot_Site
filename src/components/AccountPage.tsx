@@ -10,27 +10,37 @@ interface AccountPageProps {
   setUser: (user: any) => void;
 }
 
-type Profile = {
-  id: string;
-  name: string | null;
-  subscription_status: 'active' | 'inactive' | 'trial' | null;
-  stripe_customer_id: string | null;
-  subscription_plan: string | null;
-  next_billing_date: string | null;
-};
+
 export const AccountPage: React.FC<AccountPageProps> = ({
   userDetails,
   setUser
 }) => {
-  const [profile, setProfile] = React.useState<Profile | null>(null);
-  const [subscribed, setSubscribed] = React.useState<boolean | null>(null);
+  const [subscribed, setSubscribed] = React.useState<boolean>(false);
+  const [plan, setPlan] = React.useState<string | null>(null);
+  const [status, setStatus] = React.useState<string | null>(null);
+  const [nextBillingDate, setNextBillingDate] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<'account' | 'subscription'>('account');
 
   React.useEffect(() => {
-    const fetchProfile = async () => {
+    async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: boolean; plan?: string | null; status?: string | null; nextBillingDate?: string | null }> {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('subscription_status, subscription_plan, next_billing_date')
+        .eq('id', userId)
+        .single();
+      if (error || !data) return { subscribed: false };
+      return {
+        subscribed: data.subscription_status === 'active',
+        plan: data.subscription_plan,
+        status: data.subscription_status,
+        nextBillingDate: data.next_billing_date
+      };
+    }
+
+    const fetchAndSetSubscription = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -41,40 +51,29 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           setLoading(false);
           return;
         }
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        if (error && error.code !== 'PGRST116') { // 'PGRST116' = no rows found
-          setError('Could not fetch profile.');
-          setProfile(null);
-        } else if (!data) {
-          setProfile(null);
-        } else {
-          setProfile(data as Profile);
-        }
+        const subInfo = await fetchSubscriptionStatus(userId);
+        setSubscribed(subInfo.subscribed);
+        setPlan(subInfo.plan ?? null);
+        setStatus(subInfo.status ?? null);
+        setNextBillingDate(subInfo.nextBillingDate ?? null);
       } catch (err: any) {
-        if (err.data) {
-          setProfile(err.data);
-          setSubscribed(err.data.subscription_status === 'active');
-        } else {
-          setProfile(null);
-          setSubscribed(false);
-        }
-        setError('Unexpected error fetching profile.');
+        setSubscribed(false);
+        setPlan(null);
+        setStatus(null);
+        setNextBillingDate(null);
+        setError('Unexpected error fetching subscription info.');
       }
       setLoading(false);
     };
-    fetchProfile();
+    fetchAndSetSubscription();
   }, []);
 
   // Get plan name based on selected plan
   const getPlanName = () => {
-    if (profile?.subscription_plan === 'preorder') {
+    if (plan === 'preorder') {
       return 'Standard Plan (Preorder Special)';
     }
-    switch (profile?.subscription_plan) {
+    switch (plan) {
       case 'basic':
         return 'Standard Plan';
       case 'pro':
@@ -82,14 +81,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       case 'enterprise':
         return 'Enterprise Plan';
       default:
-        return profile === null ? 'Never Subscribed' : 'No subscription';
+        return !subscribed ? 'Never Subscribed' : 'No subscription';
     }
   };
   const getPlanPrice = () => {
-    if (profile?.subscription_plan === 'preorder') {
+    if (plan === 'preorder') {
       return '$14.99/3 months';
     }
-    switch (profile?.subscription_plan) {
+    switch (plan) {
       case 'basic':
         return '$7.99/month';
       case 'pro':
@@ -97,11 +96,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       case 'enterprise':
         return '$99.99/month';
       default:
-        return profile === null ? '$0' : '$0';
+        return !subscribed ? '$0' : '$0';
     }
   };
   const getStatusBadge = () => {
-    switch (profile?.subscription_status) {
+    switch (status) {
       case 'active':
         return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Active</span>;
       case 'trial':
@@ -109,7 +108,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       case 'inactive':
         return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Inactive</span>;
       default:
-        return profile === null ? <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Never Subscribed</span> : <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">No subscription</span>;
+        return !subscribed ? <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Never Subscribed</span> : <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">No subscription</span>;
     }
   };
   return <div className="w-full bg-black">
@@ -158,7 +157,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       </div>
       {/* Tab content */}
       <div className="py-6 px-4 sm:px-6">
-        {error === 'No user ID found.' && !profile && (
+        {error === 'No user ID found.' && !subscribed && (
           <div className="flex flex-col items-center justify-center py-10">
             <div className="text-white text-lg mb-4">No account found.</div>
             <a
@@ -287,7 +286,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       <div>
                         <h3 className="text-lg font-medium text-white">Current Plan</h3>
                         <p className="mt-1 text-sm text-white/70">
-                          {profile === null ? 'You have never subscribed.' : 'Manage your subscription'}
+                          {!subscribed ? 'You have never subscribed.' : 'Manage your subscription'}
                         </p>
                       </div>
                       {getStatusBadge()}
@@ -298,7 +297,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       <h4 className="text-xl font-bold text-white">{getPlanName()}</h4>
                       <p className="text-white/70">{getPlanPrice()}</p>
                     </div>
-                    {profile === null ? (
+                    {!subscribed ? (
                       <div className="mb-6 flex justify-center">
                         <a
                           href="/subscribe"
@@ -311,25 +310,35 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       <div className="mb-6 flex justify-center">
                         <a
                           href="/subscribe"
-                          className={`px-6 py-2 rounded-lg font-semibold transition-colors shadow-md ${profile.subscription_status === 'active' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                          className={`px-6 py-2 rounded-lg font-semibold transition-colors shadow-md ${status === 'active' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
                         >
-                          {profile.subscription_status === 'active' ? 'Manage Subscription' : 'Subscribe'}
+                          {status === 'active' ? 'Manage Subscription' : 'Subscribe'}
                         </a>
                       </div>
                     )}
-                    {profile && (
+                    {(status === 'active' || status === 'trial') && (
                       <div className="bg-blue-500/10 rounded-lg p-4 mb-6 border border-blue-500/20">
                         <div className="flex items-start">
                           <InfoIcon size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
                           <div className="ml-3">
                             <h5 className="text-white font-medium mb-1">Billing Information</h5>
                             <p className="text-white/80 text-sm">
-                              Your special preorder price of{' '}
-                              <span className="font-medium text-white">$14.99</span>{' '}
-                              covers your first 3 months. After this period, your
-                              subscription will automatically convert to the regular
-                              price of
-                              <span className="font-medium text-white"> $7.99/month</span>, billed monthly.
+                              {plan === 'preorder' ? (
+                                <>
+                                  Your special preorder price of{' '}
+                                  <span className="font-medium text-white">$14.99</span>{' '}
+                                  covers your first 3 months. After this period, your
+                                  subscription will automatically convert to the regular
+                                  price of
+                                  <span className="font-medium text-white"> $7.99/month</span>, billed monthly.
+                                </>
+                              ) : (
+                                <>You are currently subscribed to the <span className="font-medium text-white">{getPlanName()}</span> at <span className="font-medium text-white">{getPlanPrice()}</span>.{' '}
+                                  {nextBillingDate && (
+                                    <>Next billing date: <span className="font-medium text-white">{new Date(nextBillingDate).toLocaleDateString()}</span>.</>
+                                  )}
+                                </>
+                              )}
                             </p>
                           </div>
                         </div>
@@ -339,21 +348,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-white/70">Next billing date</span>
                         <span className="text-white font-medium">
-                          {profile?.next_billing_date ? new Date(profile.next_billing_date).toLocaleDateString() : 'N/A'}
+                          {nextBillingDate ? new Date(nextBillingDate).toLocaleDateString() : 'N/A'}
                         </span>
                       </div>
-                      {profile && (
-                        <>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-white/70">Plan</span>
-                            <span className="text-white font-medium">{getPlanName()}</span>
-                          </div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-white/70">Stripe Customer ID</span>
-                            <span className="text-white font-medium">{profile.stripe_customer_id || 'N/A'}</span>
-                          </div>
-                        </>
-                      )}
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-white/70">Plan</span>
+                        <span className="text-white font-medium">{getPlanName()}</span>
+                      </div>
                     </div>
                     <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
                       <button className="text-white/70 hover:text-white text-sm flex items-center">

@@ -1,4 +1,5 @@
 import React from 'react';
+import Welcome from './pages/Welcome';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
@@ -25,16 +26,38 @@ export function App() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setAuthChecked(true);
+      if (user) ensureProfileRow(user);
     });
     // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setAuthChecked(true);
+      if (session?.user) ensureProfileRow(session.user);
     });
     return () => {
       listener?.subscription.unsubscribe();
     };
   }, []);
+
+  // Ensure profile row exists for authenticated user
+  async function ensureProfileRow(user: any) {
+    // Check if profile row exists
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+    if (!data) {
+      // Create profile row if missing
+      await supabase.functions.invoke('signup-hook', {
+        body: {
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.full_name || user.email
+        },
+      });
+    }
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -46,6 +69,7 @@ export function App() {
       <Header user={user} onLogout={handleLogout} />
       <React.Suspense fallback={<div>Loading...</div>}>
         <Routes>
+      <Route path="/welcome" element={<Welcome />} />
           <Route path="/" element={
             <>
               <HeroSection />
