@@ -39,6 +39,7 @@ export function App() {
     };
   }, []);
 
+  ///////////////////////////////////////////
   // Ensure profile row exists for authenticated user
   async function ensureProfileRow(user: any) {
     // Check if profile row exists
@@ -59,6 +60,7 @@ export function App() {
     }
   }
 
+  ///////////////////////////////////////////
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);

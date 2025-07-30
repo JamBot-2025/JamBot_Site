@@ -19,33 +19,45 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [plan, setPlan] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState<string | null>(null);
   const [nextBillingDate, setNextBillingDate] = React.useState<string | null>(null);
+  const [noProfile, setNoProfile] = React.useState<boolean>(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<'account' | 'subscription'>('account');
 
   React.useEffect(() => {
-    async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: boolean; plan?: string | null; status?: string | null; nextBillingDate?: string | null }> {
+    async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: boolean; plan?: string | null; status?: string | null; nextBillingDate?: string | null; noProfile?: boolean }> {
+      console.log('[fetchSubscriptionStatus] Called with userId:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('subscription_status, subscription_plan, next_billing_date')
         .eq('id', userId)
         .single();
-      if (error || !data) return { subscribed: false };
-      return {
+      console.log('[fetchSubscriptionStatus] Supabase response:', { data, error });
+      if (error || !data) {
+        console.log('[fetchSubscriptionStatus] No profile found or error. Returning noProfile: true');
+        return { subscribed: false, noProfile: true };
+      }
+      const result = {
         subscribed: data.subscription_status === 'active',
         plan: data.subscription_plan,
         status: data.subscription_status,
-        nextBillingDate: data.next_billing_date
+        nextBillingDate: data.next_billing_date,
+        noProfile: false
       };
+      console.log('[fetchSubscriptionStatus] Returning:', result);
+      return result;
     }
 
     const fetchAndSetSubscription = async () => {
+      console.log('[fetchAndSetSubscription] Running');
       setLoading(true);
       setError(null);
       try {
-        const user = (window as any).supabase?.auth?.user?.();
+        const { data, error: userError } = await supabase.auth.getUser();
+        const user = data?.user;
         const userId = user?.id;
+        console.log('[fetchAndSetSubscription] user:', user);
         if (!userId) {
           setError('No user ID found.');
           setLoading(false);
@@ -56,6 +68,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         setPlan(subInfo.plan ?? null);
         setStatus(subInfo.status ?? null);
         setNextBillingDate(subInfo.nextBillingDate ?? null);
+        setNoProfile(!!subInfo.noProfile);
+        console.log('[fetchAndSetSubscription] State updated:', {
+          subscribed: subInfo.subscribed,
+          plan: subInfo.plan ?? null,
+          status: subInfo.status ?? null,
+          nextBillingDate: subInfo.nextBillingDate ?? null,
+          noProfile: !!subInfo.noProfile
+        });
       } catch (err: any) {
         setSubscribed(false);
         setPlan(null);
@@ -157,41 +177,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       </div>
       {/* Tab content */}
       <div className="py-6 px-4 sm:px-6">
-        {error === 'No user ID found.' && !subscribed && (
-          <div className="flex flex-col items-center justify-center py-10">
-            <div className="text-white text-lg mb-4">No account found.</div>
-            <a
-              href="/subscribe"
-              className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              Subscribe
-            </a>
-          </div>
-        )}
-        {!error && !loading && (
-          <div className="mb-6 flex justify-center">
-            {subscribed ? (
-              <button
-                type="button"
-                onClick={() => navigate('/manageSubscription')}
-                className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Manage Subscription
-              </button>
-            ) : (
-              <a
-                href="/subscribe"
-                className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                Subscribe
-              </a>
-            )}
-          </div>
-        )}
-        {error && error !== 'No user ID found.' && (
-          <div className="text-red-400 text-center py-10">{error}</div>
-        )}
-        {activeTab === 'account' && <div className="space-y-6">
+        {activeTab === 'account' && (
+          <div className="space-y-6">
             <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
               <div className="px-4 py-5 sm:px-6 border-b border-white/10">
                 <h3 className="text-lg font-medium text-white">
@@ -271,7 +258,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 </div>
               </div>
             </div>
-          </div>}
+          </div>
+        )}
         {activeTab === 'subscription' && (
           <div className="space-y-6">
             {loading ? (
@@ -297,7 +285,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       <h4 className="text-xl font-bold text-white">{getPlanName()}</h4>
                       <p className="text-white/70">{getPlanPrice()}</p>
                     </div>
-                    {!subscribed ? (
+                    {(noProfile || !subscribed || status !== 'active') ? (
                       <div className="mb-6 flex justify-center">
                         <a
                           href="/subscribe"
@@ -308,12 +296,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       </div>
                     ) : (
                       <div className="mb-6 flex justify-center">
-                        <a
-                          href="/subscribe"
-                          className={`px-6 py-2 rounded-lg font-semibold transition-colors shadow-md ${status === 'active' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                        <button
+                          type="button"
+                          onClick={() => navigate('/manageSubscription')}
+                          className="px-6 py-2 rounded-lg font-semibold transition-colors shadow-md bg-blue-600 hover:bg-blue-700 text-white"
                         >
-                          {status === 'active' ? 'Manage Subscription' : 'Subscribe'}
-                        </a>
+                          Manage Subscription
+                        </button>
                       </div>
                     )}
                     {(status === 'active' || status === 'trial') && (

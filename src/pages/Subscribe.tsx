@@ -148,10 +148,43 @@ export const SubscribePage: React.FC<SubscribePageProps> = ({ user, authChecked 
         <p className="mb-6 text-white/80">Unlock all features with a subscription!</p>
         <button
           className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg text-lg font-semibold hover:opacity-90 transition-colors"
-          onClick={handleSubscribe}
+          onClick={async () => {
+            setLoading(true);
+            setError(null);
+            try {
+              // Get the current user (in case user prop is stale)
+              const { data: userData } = await supabase.auth.getUser();
+              const userId = userData?.user?.id;
+              const email = userData?.user?.email;
+              if (!userId || !email) {
+                setError('You must be logged in to subscribe.');
+                setLoading(false);
+                return;
+              }
+              // Call the edge function
+              const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                body: { userId, email }
+              });
+              console.log('invoke result', { data, error });
+              if (error) {
+                setError(error.message || 'Failed to create Stripe Checkout session.');
+                setLoading(false);
+                return;
+              }
+              if (data && data.url) {
+                window.location.href = data.url;
+              } else {
+                setError('No checkout URL returned.');
+                setLoading(false);
+              }
+            } catch (err: any) {
+              setError('An error occurred during subscription.');
+              setLoading(false);
+            }
+          }}
           disabled={loading || !user}
         >
-          Subscribe with Stripe
+          {loading ? 'Redirecting...' : 'Subscribe with Stripe'}
         </button>
         <button className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white border border-white/10" onClick={() => navigate('/account')}>Go to Account</button>
       </div>

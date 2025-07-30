@@ -13,7 +13,7 @@ function withCorsHeaders(res: Response) {
   });
 }
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+const stripe = new Stripe(Deno.env.get("STRIPE_TEST_SECRET_KEY")!, { // After changing back to live, delete current user data from profiles table inorder to update stripe_customer_id
   apiVersion: "2023-10-16",
 });
 
@@ -40,30 +40,29 @@ serve(async (req) => {
     return withCorsHeaders(new Response("Stripe customer creation failed", { status: 500 }));
   }
 
-  // 2. Update profiles table
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  // DEBUG: Log env vars (do NOT log secrets in production)
-  console.log("supabaseUrl:", supabaseUrl);
-  console.log("supabaseKey:", supabaseKey);
-  const response = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
-    method: "PATCH",
-    headers: {
-      "apikey": supabaseKey,
-      "Authorization": `Bearer ${supabaseKey}`,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation"
-    },
-    body: JSON.stringify({ stripe_customer_id: customer.id })
-  });
+  // 2. Insert profile row into Supabase
+  // Import the Supabase client
+  const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.7");
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
 
-  if (!response.ok) {
-    console.error("Failed to update profiles table:", await response.text());
-    return withCorsHeaders(new Response("Failed to update profiles table", { status: 500 }));
+  const { error: insertError } = await supabase
+    .from("profiles")
+    .insert([
+      {
+        id,
+        name,
+        stripe_customer_id: customer.id
+      }
+    ]);
+
+  // If error is not unique violation (row already exists), return error
+  if (insertError && insertError.code !== "23505") {
+    console.error("Profile row creation failed:", insertError);
+    return withCorsHeaders(new Response("Profile row creation failed", { status: 500 }));
   }
 
-  return withCorsHeaders(new Response(JSON.stringify({ stripe_customer_id: customer.id }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" }
-  }));
+  return withCorsHeaders(new Response("Success", { status: 200 }));
 });
