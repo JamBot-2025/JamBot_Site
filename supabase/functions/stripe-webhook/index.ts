@@ -73,6 +73,7 @@ serve(async (req) => {
     if (error) console.error("[stripe-webhook] DB update error:", error);
   }
 
+  // Handle subscription creation and updates
   if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
     const subscription = event.data.object;
     const customerId = subscription.customer;
@@ -84,7 +85,7 @@ serve(async (req) => {
       .eq("stripe_customer_id", customerId);
     if (error) console.error("[stripe-webhook] DB update error:", error);
   }
-
+  // Handle subscription cancellation
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
     const customerId = subscription.customer;
@@ -92,6 +93,30 @@ serve(async (req) => {
     const { error } = await supabase
       .from("profiles")
       .update({ subscription_status: "canceled" })
+      .eq("stripe_customer_id", customerId);
+    if (error) console.error("[stripe-webhook] DB update error:", error);
+  }
+
+  // Handle subscription expiration
+  if (event.type === "customer.subscription.expired") {
+    const subscription = event.data.object;
+    const customerId = subscription.customer;
+    console.log("[stripe-webhook] customer.subscription.expired for customer:", customerId);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ subscription_status: "expired" })
+      .eq("stripe_customer_id", customerId);
+    if (error) console.error("[stripe-webhook] DB update error:", error);
+  }
+
+  // Handle payment failure (past_due/dunning)
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object;
+    const customerId = invoice.customer;
+    console.log("[stripe-webhook] invoice.payment_failed for customer:", customerId);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ subscription_status: "past_due" })
       .eq("stripe_customer_id", customerId);
     if (error) console.error("[stripe-webhook] DB update error:", error);
   }

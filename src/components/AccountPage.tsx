@@ -345,56 +345,10 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         <span className="text-white font-medium">{getPlanName()}</span>
                       </div>
                     </div>
-                    <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
-                      <button className="text-white/70 hover:text-white text-sm flex items-center">
-                        <CreditCardIcon size={16} className="mr-2" />
-                        Update payment method
-                      </button>
-                      <button className="text-red-400 hover:text-red-300 text-sm">Cancel subscription</button>
-                    </div>
+                    
                   </div>
                 </div>
-                <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                  <div className="px-4 py-5 sm:px-6 border-b border-white/10">
-                    <h3 className="text-lg font-medium text-white">Billing History</h3>
-                  </div>
-                  <div className="px-4 py-5 sm:p-6">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-white/10">
-                        <thead>
-                          <tr>
-                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">Date</th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">Amount</th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white/70">Status</th>
-                            <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-white/70">Invoice</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/10">
-                          <tr>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">Apr 12, 2023</td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">{getPlanPrice()}</td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm">
-                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Paid</span>
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-                              <a href="#" className="text-purple-400 hover:text-purple-300">Download</a>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">Mar 12, 2023</td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-white/80">{getPlanPrice()}</td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm">
-                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Paid</span>
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-                              <a href="#" className="text-purple-400 hover:text-purple-300">Download</a>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
+                
               </>
             )}
           </div>

@@ -87,6 +87,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Email address"
                 disabled={loading}
+                data-testid="email-input"
               />
             </div>
             {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
@@ -104,6 +105,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Password"
                 disabled={loading}
+                data-testid="password-input"
               />
             </div>
             {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
