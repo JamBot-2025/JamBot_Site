@@ -1,3 +1,6 @@
 {
-  "imports": {}
+  "imports": {},
+  "supabase": {
+    "auth": false
+  }
 }

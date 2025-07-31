@@ -2,6 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "npm:stripe@12.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
+//FUNCTIONALITY: Creates a checkout session for a user to subscribe to a plan.//
+
+
+//Change to STRIPE_SECRET_KEY when going live
 const stripe = new Stripe(Deno.env.get("STRIPE_TEST_SECRET_KEY")!, { apiVersion: "2022-11-15" });
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,

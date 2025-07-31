@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.16.0?target=deno";
 
+//FUNCTIONALITY: Creates a new profile  row into Supabase.
+
 function withCorsHeaders(res: Response) {
   const headers = new Headers(res.headers);
   headers.set("Access-Control-Allow-Origin", "*");
@@ -13,7 +15,8 @@ function withCorsHeaders(res: Response) {
   });
 }
 
-const stripe = new Stripe(Deno.env.get("STRIPE_TEST_SECRET_KEY")!, { // After changing back to live, delete current user data from profiles table inorder to update stripe_customer_id
+// After changing back to live, delete current user data from profiles table inorder to update stripe_customer_id
+const stripe = new Stripe(Deno.env.get("STRIPE_TEST_SECRET_KEY")!, { 
   apiVersion: "2023-10-16",
 });
 
