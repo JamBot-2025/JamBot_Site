@@ -73,26 +73,68 @@ serve(async (req) => {
     if (error) console.error("[stripe-webhook] DB update error:", error);
   }
 
-  // Handle subscription creation and updates
-  if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
+  // Handle subscription creation, updates, and invoice paid
+  if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "invoice.paid") {
     const subscription = event.data.object;
     const customerId = subscription.customer;
     const status = subscription.status;
     console.log(`[stripe-webhook] ${event.type} for customer:`, customerId, "status:", status);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ subscription_status: status })
-      .eq("stripe_customer_id", customerId);
-    if (error) console.error("[stripe-webhook] DB update error:", error);
+    if (status === "incomplete") {
+      // Only set to incomplete if not already active
+      const { data, error: fetchError } = await supabase
+        .from("profiles")
+        .select("subscription_status")
+        .eq("stripe_customer_id", customerId)
+        .single();
+      if (fetchError) {
+        console.error("[stripe-webhook] DB fetch error:", fetchError);
+      }
+      if (data?.subscription_status !== "active") {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ subscription_status: status })
+          .eq("stripe_customer_id", customerId);
+        if (error) console.error("[stripe-webhook] DB update error:", error);
+        else console.log(`[stripe-webhook] Set status to incomplete for customer:`, customerId);
+      } else {
+        console.log(`[stripe-webhook] Skipped setting status to incomplete for active customer:`, customerId);
+      }
+    } else {
+      // Log the full subscription object for debugging
+      console.log('[stripe-webhook] Subscription object:', JSON.stringify(subscription));
+      // Extract plan and next billing date from Stripe subscription
+      const item = subscription.items.data[0];
+      const plan = item?.price.nickname || item?.price.id;
+      const currentPeriodEnd = item?.current_period_end;
+      // Only set nextBillingDate if status is 'active'
+      const nextBillingDate = status === 'active' && currentPeriodEnd
+        ? new Date(currentPeriodEnd * 1000).toISOString()
+        : null;
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          subscription_status: status,
+          subscription_plan: plan,
+          next_billing_date: nextBillingDate,
+        })
+        .eq("stripe_customer_id", customerId);
+      if (error) console.error("[stripe-webhook] DB update error:", error);
+      else console.log(`[stripe-webhook] Updated subscription info for customer:`, customerId);
+    }
   }
   // Handle subscription cancellation
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
     const customerId = subscription.customer;
     console.log("[stripe-webhook] customer.subscription.deleted for customer:", customerId);
+    // On deletion, clear plan and next billing date as well
     const { error } = await supabase
       .from("profiles")
-      .update({ subscription_status: "canceled" })
+      .update({
+        subscription_status: "canceled",
+        subscription_plan: null,
+        next_billing_date: null,
+      })
       .eq("stripe_customer_id", customerId);
     if (error) console.error("[stripe-webhook] DB update error:", error);
   }

@@ -90,35 +90,12 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
   // Get plan name based on selected plan
   const getPlanName = () => {
-    if (plan === 'preorder') {
-      return 'Standard Plan (Preorder Special)';
-    }
-    switch (plan) {
-      case 'basic':
-        return 'Standard Plan';
-      case 'pro':
-        return 'Pro Plan';
-      case 'enterprise':
-        return 'Enterprise Plan';
-      default:
-        return !subscribed ? 'Never Subscribed' : 'No subscription';
-    }
+    return subscribed ? 'Jambot' : 'No subscription';
   };
   const getPlanPrice = () => {
-    if (plan === 'preorder') {
-      return '$14.99/3 months';
-    }
-    switch (plan) {
-      case 'basic':
-        return '$7.99/month';
-      case 'pro':
-        return '$29.99/month';
-      case 'enterprise':
-        return '$99.99/month';
-      default:
-        return !subscribed ? '$0' : '$0';
-    }
+    return subscribed ? '$7.99/month' : '$0';
   };
+
   const getStatusBadge = () => {
     switch (status) {
       case 'active':
@@ -128,7 +105,20 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       case 'inactive':
         return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Inactive</span>;
       default:
-        return !subscribed ? <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Never Subscribed</span> : <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">No subscription</span>;
+        if (!subscribed) {
+          switch (status) {
+            case 'canceled':
+              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400">Canceled</span>;
+            case 'expired':
+              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-500/20 text-orange-400">Expired</span>;
+            case 'past_due':
+              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Past Due</span>;
+            default:
+              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Never Subscribed</span>;
+          }
+        } else {
+          return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">No subscription</span>;
+        }
     }
   };
   return <div className="w-full bg-black">
@@ -312,22 +302,29 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           <div className="ml-3">
                             <h5 className="text-white font-medium mb-1">Billing Information</h5>
                             <p className="text-white/80 text-sm">
-                              {plan === 'preorder' ? (
-                                <>
-                                  Your special preorder price of{' '}
-                                  <span className="font-medium text-white">$14.99</span>{' '}
-                                  covers your first 3 months. After this period, your
-                                  subscription will automatically convert to the regular
-                                  price of
-                                  <span className="font-medium text-white"> $7.99/month</span>, billed monthly.
-                                </>
-                              ) : (
-                                <>You are currently subscribed to the <span className="font-medium text-white">{getPlanName()}</span> at <span className="font-medium text-white">{getPlanPrice()}</span>.{' '}
-                                  {nextBillingDate && (
-                                    <>Next billing date: <span className="font-medium text-white">{new Date(nextBillingDate).toLocaleDateString()}</span>.</>
-                                  )}
-                                </>
-                              )}
+                              <>
+                                {plan === 'preorder' ? (
+                                  <>
+                                    Your special preorder price of{' '}
+                                    <span className="font-medium text-white">$14.99</span>{' '}
+                                    covers your first 3 months. After this period, your
+                                    subscription will automatically convert to the regular
+                                    price of
+                                    <span className="font-medium text-white"> $7.99/month</span>, billed monthly.
+                                  </>
+                                ) : (
+                                  !subscribed ? (
+                                    <span>You do not have an active subscription.</span>
+                                  ) : (
+                                    <>
+                                      You are currently subscribed to the <span className="font-medium text-white">{getPlanName()}</span> at <span className="font-medium text-white">{getPlanPrice()}</span>.{' '}
+                                      {nextBillingDate && (
+                                        <>Next billing date: <span className="font-medium text-white">{new Date(nextBillingDate).toLocaleDateString()}</span>.</>
+                                      )}
+                                    </>
+                                  )
+                                )}
+                              </>
                             </p>
                           </div>
                         </div>
