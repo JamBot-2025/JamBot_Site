@@ -10,7 +10,6 @@ interface AccountPageProps {
   setUser: (user: any) => void;
 }
 
-
 export const AccountPage: React.FC<AccountPageProps> = ({
   userDetails,
   setUser
@@ -25,6 +24,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<'account' | 'subscription'>('account');
 
+  // Fetch subscription status (on component mount)
   React.useEffect(() => {
     async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: boolean; plan?: string | null; status?: string | null; nextBillingDate?: string | null; noProfile?: boolean }> {
       console.log('[fetchSubscriptionStatus] Called with userId:', userId);
@@ -92,10 +92,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const getPlanName = () => {
     return subscribed ? 'Jambot' : 'No subscription';
   };
+
+  // Get plan price based on selected plan
   const getPlanPrice = () => {
     return subscribed ? '$7.99/month' : '$0';
   };
 
+  // Get status badge based on selected plan
   const getStatusBadge = () => {
     switch (status) {
       case 'active':
@@ -121,8 +124,68 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         }
     }
   };
+
+  // Account update state
+  const [newName, setNewName] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [accountMsg, setAccountMsg] = React.useState("");
+
+  // Helper to get current user and stripe_customer_id
+  const getUserAndStripeId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No user found');
+    // Fetch from profiles table
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .single();
+    if (error || !profile?.stripe_customer_id) throw new Error('No Stripe customer ID');
+    return { user, stripe_customer_id: profile.stripe_customer_id };
+  };
+
+  // Update Name
+  const handleNameChange = async () => {
+    setAccountMsg("");
+    try {
+      const { user, stripe_customer_id } = await getUserAndStripeId();
+      const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
+      const resp = await fetch('https://mcsqxmsvyckabbgefixy.functions.supabase.co/update-stripe-customer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken || process.env.SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ user_id: user.id, stripe_customer_id, name: newName })
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) {
+        throw new Error(data.error || 'Failed to update account');
+      }
+      // Force refresh user object
+      await supabase.auth.refreshSession();
+      const { data: { user: refreshedUser } } = await supabase.auth.getUser();
+      // Optionally update your local user state here if needed
+      setAccountMsg('Name updated everywhere!');
+    } catch (err: any) {
+      setAccountMsg('Error updating name: ' + err.message);
+    }
+  };
+
+  // Update Password
+  const handlePasswordChange = async () => {
+    setAccountMsg("");
+    try {
+      await supabase.auth.updateUser({ password: newPassword });
+      setAccountMsg('Password updated!');
+    } catch (err: any) {
+      setAccountMsg('Error updating password: ' + err.message);
+    }
+  };
+
+  //Account page UI
   return <div className="w-full bg-black">
-      {/* Header */}
+    {/* Header */}
       <div className="border-b border-white/10 py-4 px-4 sm:px-6 flex justify-between items-center">
         <button
           onClick={async () => {
@@ -179,29 +242,102 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 </p>
               </div>
               <div className="px-4 py-5 sm:p-6 space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-white/80">
-                    Full Name
-                  </label>
-                  <input type="text" name="name" id="name" defaultValue={userDetails.name} className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-white/80">
-                    Email Address
-                  </label>
-                  <input type="email" name="email" id="email" defaultValue={userDetails.email} className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500" />
-                </div>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-white/80">
-                    Password
-                  </label>
-                  <input type="password" name="password" id="password" defaultValue="••••••••" className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500" />
-                </div>
-                <div className="flex justify-end">
-                  <button type="button" className="px-4 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90">
-                    Save Changes
-                  </button>
-                </div>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setAccountMsg("");
+                  setLoading(true);
+                  let nameChanged = newName && newName !== userDetails.name;
+                  let passwordChanged = newPassword && newPassword.length > 0;
+                  let msgArr = [];
+                  try {
+                    if (nameChanged) {
+                      await handleNameChange();
+                      msgArr.push('Name updated');
+                    }
+                    if (passwordChanged) {
+                      await handlePasswordChange();
+                      msgArr.push('Password updated');
+                    }
+                    if (msgArr.length > 0) {
+                      setAccountMsg(msgArr.join(' | '));
+                    } else {
+                      setAccountMsg('No changes to update');
+                    }
+                  } catch (err: any) {
+                    setAccountMsg('Error updating account: ' + err.message);
+                  }
+                  setLoading(false);
+                }} className="space-y-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-white/80">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      value={newName}
+                      onChange={e => setNewName(e.target.value)}
+                      placeholder={userDetails.name}
+                      className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-white/80">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      id="password"
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      disabled={loading}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90"
+                      onClick={async () => {
+                        setAccountMsg("");
+                        setLoading(true);
+                        try {
+                          await handleNameChange();
+                        } catch (err: any) {
+                          setAccountMsg('Error updating name: ' + err.message);
+                        }
+                        setLoading(false);
+                      }}
+                    >
+                      {loading ? 'Saving...' : 'Save Name'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={loading}
+                      className="px-4 py-2 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 text-white rounded-lg transition-all hover:opacity-90"
+                      onClick={async () => {
+                        setAccountMsg("");
+                        setLoading(true);
+                        try {
+                          setAccountMsg('Updating password...');
+                          const { error } = await supabase.auth.updateUser({ password: newPassword });
+                          if (error) throw error;
+                          setAccountMsg('Password updated!');
+                        } catch (err: any) {
+                          setAccountMsg('Error updating password: ' + err.message);
+                        }
+                        setLoading(false);
+                      }}
+                    >
+                      {loading ? 'Saving...' : 'Save Password'}
+                    </button>
+                  </div>
+                  {accountMsg && (
+                    <div className="mt-2 text-white font-semibold">{accountMsg}</div>
+                  )}
+                </form>
               </div>
             </div>
             <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
