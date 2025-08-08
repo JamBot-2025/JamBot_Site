@@ -19,6 +19,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [resetStatus, setResetStatus] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +75,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4">
       <div className="relative bg-gradient-to-br from-black/70 to-gray-900/80 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-8 mx-4">
         <h2 className="text-2xl font-bold text-center text-white mb-6">Log In</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">
@@ -111,6 +113,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
             {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
           </div>
           {authError && <div className="text-red-500 text-sm text-center">{authError}</div>}
+          {resetStatus && <div className={`text-sm text-center ${resetStatus.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{resetStatus}</div>}
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
@@ -119,9 +122,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               </label>
             </div>
             <div className="text-sm">
-              <a href="#" className="text-purple-400 hover:text-purple-300">
-                Forgot password?
-              </a>
+              <button
+                type="button"
+                className="text-purple-400 hover:text-purple-300 disabled:opacity-60"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                onClick={async () => {
+                  setResetStatus(null);
+                  if (!formData.email) {
+                    setResetStatus('Please enter your email above first.');
+                    return;
+                  }
+                  setResetLoading(true);
+                  const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+                    redirectTo: 'http://localhost:5173/reset-password'
+                  });
+                  setResetLoading(false);
+                  if (error) {
+                    setResetStatus('Error: ' + error.message);
+                  } else {
+                    setResetStatus('Password reset email sent! Check your inbox.');
+                  }
+                }}
+                disabled={resetLoading}
+              >
+                {resetLoading ? 'Sending...' : 'Forgot password?'}
+              </button>
             </div>
           </div>
           <button

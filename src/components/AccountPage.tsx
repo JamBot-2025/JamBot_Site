@@ -127,7 +127,6 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
   // Account update state
   const [newName, setNewName] = React.useState("");
-  const [newPassword, setNewPassword] = React.useState("");
   const [accountMsg, setAccountMsg] = React.useState("");
 
   // Helper to get current user and stripe_customer_id
@@ -146,40 +145,24 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
   // Update Name
   const handleNameChange = async () => {
-    setAccountMsg("");
-    try {
-      const { user, stripe_customer_id } = await getUserAndStripeId();
-      const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
-      const resp = await fetch('https://mcsqxmsvyckabbgefixy.functions.supabase.co/update-stripe-customer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken || process.env.SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ user_id: user.id, stripe_customer_id, name: newName })
-      });
-      const data = await resp.json();
-      if (!resp.ok || data.error) {
-        throw new Error(data.error || 'Failed to update account');
-      }
-      // Force refresh user object
-      await supabase.auth.refreshSession();
-      const { data: { user: refreshedUser } } = await supabase.auth.getUser();
-      // Optionally update your local user state here if needed
-      setAccountMsg('Name updated everywhere!');
-    } catch (err: any) {
-      setAccountMsg('Error updating name: ' + err.message);
-    }
+
   };
 
-  // Update Password
-  const handlePasswordChange = async () => {
+  // Send Password Reset Email
+  const handleSendResetEmail = async () => {
     setAccountMsg("");
-    try {
-      await supabase.auth.updateUser({ password: newPassword });
-      setAccountMsg('Password updated!');
-    } catch (err: any) {
-      setAccountMsg('Error updating password: ' + err.message);
+    const email = userDetails.email;
+    if (!email) {
+      setAccountMsg('No email found for this user.');
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'http://localhost:5173/reset-password' // Update to the actual URL when done
+    });
+    if (error) {
+      setAccountMsg('Error sending reset email: ' + error.message);
+    } else {
+      setAccountMsg('Password reset email sent! Check your inbox.');
     }
   };
 
@@ -282,18 +265,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-white/80">
+                  <div className="flex flex-col items-start space-y-2">
+                    <label className="block text-sm font-medium text-white/80">
                       Password
                     </label>
-                    <input
-                      type="password"
-                      name="password"
-                      id="password"
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    />
+                    <a
+                      href="/change-password"
+                      className="px-4 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 text-center"
+                    >
+                      Change Password
+                    </a>
                   </div>
                   <div className="flex justify-end space-x-2">
                     <button

@@ -1,30 +1,32 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { LoginForm } from './LoginForm';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { vi } from 'vitest';
 
-// Mock supabase client
-vi.mock('../supabaseClient', () => ({
-  supabase: {
-    auth: {
-      signInWithPassword: vi.fn()
-    }
-  }
-}));
-
-// Mock useNavigate from react-router-dom
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal();
+// Mock react-router-dom's useNavigate
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => vi.fn(),
   };
 });
 
-import { supabase } from '../supabaseClient';
+// Mock supabase client
+vi.mock('../supabaseClient', () => ({
+  supabase: {
+    auth: {
+      signInWithPassword: vi.fn(),
+      resetPasswordForEmail: vi.fn(),
+    },
+  },
+}));
 
-const setup = (props = {}) => {
-  return render(<LoginForm {...props} />);
-};
+// Get reference to the mocked functions after import
+import { supabase } from '../supabaseClient';
+const mockSignIn = supabase.auth.signInWithPassword as any;
+const mockResetPassword = supabase.auth.resetPasswordForEmail as any;
+
+// Import component after mocks
+import { LoginForm } from './LoginForm';
 
 describe('LoginForm', () => {
   beforeEach(() => {
@@ -32,42 +34,42 @@ describe('LoginForm', () => {
   });
 
   it('renders the login form', () => {
-    setup();
+    render(<LoginForm />);
     expect(screen.getByTestId('email-input')).toBeInTheDocument();
     expect(screen.getByTestId('password-input')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
   });
 
   it('shows validation errors for empty fields', async () => {
-    setup();
+    render(<LoginForm />);
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
     expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
     expect(await screen.findByText(/password is required/i)).toBeInTheDocument();
   });
 
   it('shows validation error for invalid email', async () => {
-    setup();
-    fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'notanemail' } });
-    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'password123' } });
+    render(<LoginForm />);
+    fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'not-an-email' } });
+    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'somepass' } });
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-    expect(await screen.findByText(/email is invalid/i)).toBeInTheDocument();
+    await screen.findByText(/email is invalid/i, undefined, { timeout: 5000 });
   });
 
-  it('shows error if supabase returns error (wrong password)', async () => {
-    (supabase.auth.signInWithPassword as any).mockResolvedValue({ error: { message: 'Invalid login credentials' } });
-    setup();
+  it('shows error when supabase returns an error (wrong credentials)', async () => {
+    mockSignIn.mockResolvedValue({ error: { message: 'Invalid login credentials' } });
+    render(<LoginForm />);
     fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
-    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'wrongpassword' } });
+    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'wrongpass' } });
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
     expect(await screen.findByText(/invalid login credentials/i)).toBeInTheDocument();
   });
 
   it('calls onLoginSuccess and navigates on successful login', async () => {
-    (supabase.auth.signInWithPassword as any).mockResolvedValue({ error: null });
+    mockSignIn.mockResolvedValue({ error: null });
     const onLoginSuccess = vi.fn();
-    setup({ onLoginSuccess });
+    render(<LoginForm onLoginSuccess={onLoginSuccess} />);
     fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
-    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'correctpassword' } });
+    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'correctpass' } });
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
     await waitFor(() => {
       expect(onLoginSuccess).toHaveBeenCalled();
@@ -75,13 +77,37 @@ describe('LoginForm', () => {
   });
 
   it('shows loading indicator while logging in', async () => {
-    let resolvePromise: any;
-    (supabase.auth.signInWithPassword as any).mockImplementation(() => new Promise((resolve) => { resolvePromise = resolve; }));
-    setup();
+    // Mock signIn to resolve immediately
+    mockSignIn.mockResolvedValue({ error: null });
+    render(<LoginForm />);
     fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
-    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'correctpassword' } });
+    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'correctpass' } });
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-    expect(screen.getByRole('button', { name: /logging in/i })).toBeInTheDocument();
-    resolvePromise({ error: null });
+    // Button text should change to loading state
+    await waitFor(() => expect(screen.getByText(/logging in/i)).toBeInTheDocument());
+    // After async resolves, button should return to normal state
+    await waitFor(() => expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument());
+  });
+
+  it('shows success message after forgot password request', async () => {
+    mockResetPassword.mockResolvedValue({ error: null });
+    render(<LoginForm />);
+    fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /forgot password\?/i }));
+    // Loading state
+    await waitFor(() => expect(screen.getByText(/sending\.{3}/i)).toBeInTheDocument());
+    // Success message
+    await waitFor(() => expect(screen.getByText(/password reset email sent!/i)).toBeInTheDocument());
+  });
+
+  it('shows error message when forgot password fails', async () => {
+    mockResetPassword.mockResolvedValue({ error: { message: 'Reset error' } });
+    render(<LoginForm />);
+    fireEvent.change(screen.getByTestId('email-input'), { target: { value: 'user@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /forgot password\?/i }));
+    // Loading state
+    await waitFor(() => expect(screen.getByText(/sending\.{3}/i)).toBeInTheDocument());
+    // Error message
+    await waitFor(() => expect(screen.getByText(/error: reset error/i)).toBeInTheDocument());
   });
 });

@@ -1,8 +1,6 @@
-import { expect } from 'vitest';
-import * as matchers from '@testing-library/jest-dom/matchers';
+/// <reference types="vitest/globals" />
+import '@testing-library/jest-dom';
 
-// Extend Vitest's expect with jest-dom matchers
-expect.extend(matchers);
 
 // Mock IntersectionObserver for jsdom
 declare global {

@@ -13,6 +13,8 @@ import { SignupForm } from './components/SignupForm';
 import { LoginForm } from './components/LoginForm';
 import ManageSubscription from './pages/ManageSubscription';
 import { supabase } from './supabaseClient';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 
 const SubscribePage = React.lazy(() => import('./pages/Subscribe'));
 const AccountPage = React.lazy(() => import('./components/AccountPage'));
@@ -99,6 +101,8 @@ export function App() {
           <Route path="/login" element={<LoginForm />} />
           <Route path="/success" element={<div className="text-white p-10">Subscription Successful!</div>} />
           <Route path="/cancel" element={<div className="text-white p-10">Subscription Cancelled.</div>} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/change-password" element={<ChangePasswordPage />} />
         </Routes>
       </React.Suspense>
       <FooterSection />
