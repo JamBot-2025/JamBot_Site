@@ -190,8 +190,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         throw error;
       }
       
-      // Update the UI to reflect the new name
-      setUser({ ...userDetails, name: newName });
+      // Refresh the session and fetch a fresh user to avoid stale metadata flicker
+      await supabase.auth.refreshSession();
+      const { data: fresh } = await supabase.auth.getUser();
+      const freshUser = fresh?.user;
+
+      if (freshUser) {
+        // Update global user state with the proper Supabase user shape
+        setUser(freshUser);
+      }
+
       setAccountMsg('Name updated successfully');
     } catch (err: any) {
       console.error('Error updating name:', err);
