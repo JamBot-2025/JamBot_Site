@@ -7,8 +7,6 @@ import { FeaturesSection } from './components/FeaturesSection';
 import { PricingSection } from './components/PricingSection';
 import { CTASection } from './components/CTASection';
 import { FooterSection } from './components/FooterSection';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from './utils/stripe';
 import { SignupForm } from './components/SignupForm';
 import { LoginForm } from './components/LoginForm';
 import ManageSubscription from './pages/ManageSubscription';
@@ -45,7 +43,7 @@ export function App() {
   // Ensure profile row exists for authenticated user
   async function ensureProfileRow(user: any) {
     // Check if profile row exists
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('id')
       .eq('id', user.id)
@@ -63,14 +61,11 @@ export function App() {
   }
 
   ///////////////////////////////////////////
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
+  
 
   return (
     <BrowserRouter>
-      <Header user={user} onLogout={handleLogout} />
+      <Header user={user} />
       <React.Suspense fallback={<div>Loading...</div>}>
         <Routes>
       <Route path="/welcome" element={<Welcome />} />
@@ -83,9 +78,7 @@ export function App() {
             </>
           } />
           <Route path="/subscribe" element={
-            <Elements stripe={stripePromise}>
-              <SubscribePage user={user} authChecked={authChecked} />
-            </Elements>
+            <SubscribePage user={user} authChecked={authChecked} />
           } />
           <Route path="/account" element={
             <AccountPage

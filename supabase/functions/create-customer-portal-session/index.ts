@@ -2,6 +2,9 @@
 // POST { customerId: string }
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.14.0?target=denonext";
+import { createCustomerPortalSession } from "./lib.ts";
+// FUNCTIONALITY: Customer Portal entrypoint; creates a Stripe Billing Portal session for a customer.
+
 // NOTE: Set verify_jwt = false in supabase/config.toml for this function if you get 401 errors from frontend
 
 const stripe = new Stripe(Deno.env.get("STRIPE_TEST_SECRET_KEY")!, { apiVersion: "2023-10-16" });
@@ -26,22 +29,24 @@ serve(async (req) => {
     return withCorsHeaders(new Response("Method Not Allowed", { status: 405 }));
   }
   try {
-    const body = await req.json();
-    console.log("[customer-portal] Incoming body:", body);
-    const stripeKey = Deno.env.get("STRIPE_TEST_SECRET_KEY");
-    console.log("[customer-portal] Stripe key present:", !!stripeKey);
-    const customerId = body.customerId;
-    console.log("[customer-portal] customerId:", customerId);
-    if (!customerId) {
-      return withCorsHeaders(new Response(JSON.stringify({ error: "Missing customerId" }), { status: 400 }));
+    const { customerId } = await req.json();
+
+    const returnUrl = "http://localhost:5173/account"; // TODO: update to real return URL
+
+    const result = await createCustomerPortalSession(
+      { customerId },
+      { stripe: stripe as any },
+      { returnUrl },
+    );
+
+    if (result.ok) {
+      return withCorsHeaders(new Response(JSON.stringify({ url: result.url }), {
+        headers: { "Content-Type": "application/json" }
+      }));
+    } else {
+      const status = result.error.where === 'input' ? 400 : 500;
+      return withCorsHeaders(new Response(JSON.stringify({ error: String(result.error.err?.message || result.error.err || 'error') }), { status }));
     }
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: "http://localhost:5173/account" // TODO: update to real return URL
-    });
-    return withCorsHeaders(new Response(JSON.stringify({ url: session.url }), {
-      headers: { "Content-Type": "application/json" }
-    }));
   } catch (err) {
     console.error("[create-customer-portal-session] Error:", err);
     return withCorsHeaders(new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 }));

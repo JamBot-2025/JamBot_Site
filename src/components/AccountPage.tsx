@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCardIcon, UserIcon, LogOutIcon, BellIcon, InfoIcon } from 'lucide-react';
+import { CreditCardIcon, UserIcon, LogOutIcon, InfoIcon } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+// FUNCTIONALITY: Account page to view/update profile details and manage subscription status/CTAs.
+
+// Shows Account details + Subscription tab information,
+// Account details lets the user update name, and trigger a password reset,
+// Subscription tab shows the user's subscription status, and allows the user to either subscribe or manage their subscription.
 interface AccountPageProps {
   userDetails: {
     name: string;
@@ -14,62 +19,96 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   userDetails,
   setUser
 }) => {
+  // Subscription view-model (derived from profiles table)
   const [subscribed, setSubscribed] = React.useState<boolean>(false);
   const [plan, setPlan] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState<string | null>(null);
   const [nextBillingDate, setNextBillingDate] = React.useState<string | null>(null);
   const [noProfile, setNoProfile] = React.useState<boolean>(false);
-  const [loading, setLoading] = React.useState(true);
+
+  // UI state
+  const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<'account' | 'subscription'>('account');
 
-  // Fetch subscription status (on component mount)
+  // On mount: resolve current user, fetch subscription fields from profiles,
+  // and map them into local state. Surfaces backend errors to the UI.
   React.useEffect(() => {
-    async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: boolean; plan?: string | null; status?: string | null; nextBillingDate?: string | null; noProfile?: boolean }> {
-      console.log('[fetchSubscriptionStatus] Called with userId:', userId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('subscription_status, subscription_plan, next_billing_date')
-        .eq('id', userId)
-        .single();
-      console.log('[fetchSubscriptionStatus] Supabase response:', { data, error });
-      if (error || !data) {
-        console.log('[fetchSubscriptionStatus] No profile found or error. Returning noProfile: true');
-        return { subscribed: false, noProfile: true };
+    // fetchSubscriptionStatus: fetches subscription status from profiles table
+    async function fetchSubscriptionStatus(userId: string): Promise<{ 
+      subscribed: boolean; 
+      plan?: string | null; 
+      status?: string | null; 
+      nextBillingDate?: string | null; 
+      noProfile?: boolean;
+      error?: string | null;
+    }> {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('subscription_status, subscription_plan, next_billing_date')
+          .eq('id', userId)
+          .single();
+
+        if (error || !data) {
+          console.error('Error fetching subscription status:', error);
+          return { 
+            subscribed: false, 
+            noProfile: true,
+            error: error?.message || 'Profile not found'
+          };
+        }
+
+        return {
+          subscribed: data.subscription_status === 'active',
+          plan: data.subscription_plan,
+          status: data.subscription_status,
+          nextBillingDate: data.next_billing_date,
+          noProfile: false
+        };
+      } catch (err) {
+        console.error('Unexpected error in fetchSubscriptionStatus:', err);
+        return { 
+          subscribed: false, 
+          noProfile: true, 
+          error: 'Failed to fetch subscription status' 
+        };
       }
-      const result = {
-        subscribed: data.subscription_status === 'active',
-        plan: data.subscription_plan,
-        status: data.subscription_status,
-        nextBillingDate: data.next_billing_date,
-        noProfile: false
-      };
-      console.log('[fetchSubscriptionStatus] Returning:', result);
-      return result;
     }
 
+    //  User lookup + subscription fetch; centralized error handling.
     const fetchAndSetSubscription = async () => {
-      console.log('[fetchAndSetSubscription] Running');
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
+      // 1) Resolve current session user.
+      // 2) Pull subscription fields from 'profiles'.
+      // 3) Mirror backend error text onto UI.
       try {
         const { data, error: userError } = await supabase.auth.getUser();
         const user = data?.user;
         const userId = user?.id;
-        console.log('[fetchAndSetSubscription] user:', user);
+        // Log user presence for debugging
+        console.log('[AccountPage][fetchAndSetSubscription] user_present:', !!user);
         if (!userId) {
           setError('No user ID found.');
-          setLoading(false);
+          setIsLoading(false);
           return;
         }
+        
         const subInfo = await fetchSubscriptionStatus(userId);
+        // Reflect backend error messages to UI if present
+        if (subInfo.error) {
+          setError(subInfo.error);
+        } else {
+          setError(null);
+        }
         setSubscribed(subInfo.subscribed);
         setPlan(subInfo.plan ?? null);
         setStatus(subInfo.status ?? null);
         setNextBillingDate(subInfo.nextBillingDate ?? null);
         setNoProfile(!!subInfo.noProfile);
-        console.log('[fetchAndSetSubscription] State updated:', {
+        console.log('[AccountPage][fetchAndSetSubscription] state_updated', {
           subscribed: subInfo.subscribed,
           plan: subInfo.plan ?? null,
           status: subInfo.status ?? null,
@@ -81,10 +120,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         setPlan(null);
         setStatus(null);
         setNextBillingDate(null);
-        setError('Unexpected error fetching subscription info.');
+        setError('Error loading subscription information.');
       }
-      setLoading(false);
+      setIsLoading(false);
     };
+    
     fetchAndSetSubscription();
   }, []);
 
@@ -98,71 +138,66 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     return subscribed ? '$7.99/month' : '$0';
   };
 
-  // Get status badge based on selected plan
+  // Get status badge based on subscription status
   const getStatusBadge = () => {
-    switch (status) {
-      case 'active':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Active</span>;
-      case 'trial':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400">Trial</span>;
-      case 'inactive':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Inactive</span>;
-      default:
-        if (!subscribed) {
-          switch (status) {
-            case 'canceled':
-              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400">Canceled</span>;
-            case 'expired':
-              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-500/20 text-orange-400">Expired</span>;
-            case 'past_due':
-              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Past Due</span>;
-            default:
-              return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Never Subscribed</span>;
-          }
-        } else {
-          return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">No subscription</span>;
-        }
+    if (!status) {
+      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Not Subscribed</span>;
     }
+    
+    const statusLower = status.toLowerCase();
+    
+    if (statusLower === 'active') {
+      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-400">Active</span>;
+    }
+    if (statusLower === 'inactive') {
+      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Inactive</span>;
+    }
+    if (statusLower === 'canceled') {
+      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400">Canceled</span>;
+    }
+    if (statusLower === 'expired') {
+      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-500/20 text-orange-400">Expired</span>;
+    }
+    if (statusLower === 'past_due') {
+      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/20 text-red-400">Past Due</span>;
+    }
+    
+    // Default case for unknown status
+    return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">
+      Not Subscribed
+    </span>;
   };
 
   // Account update state
-  const [newName, setNewName] = React.useState("");
+  const [newName, setNewName] = React.useState(userDetails.name);
   const [accountMsg, setAccountMsg] = React.useState("");
+  const [isUpdating, setIsUpdating] = React.useState(false);
 
-  // Helper to get current user and stripe_customer_id
-  const getUserAndStripeId = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('No user found');
-    // Fetch from profiles table
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('stripe_customer_id')
-      .eq('id', user.id)
-      .single();
-    if (error || !profile?.stripe_customer_id) throw new Error('No Stripe customer ID');
-    return { user, stripe_customer_id: profile.stripe_customer_id };
-  };
-
-  // Update Name
+  // Updates profile name in Supabase.
+  // TODO: add basic validation (min length, disallow all-whitespace).
   const handleNameChange = async () => {
-
-  };
-
-  // Send Password Reset Email
-  const handleSendResetEmail = async () => {
-    setAccountMsg("");
-    const email = userDetails.email;
-    if (!email) {
-      setAccountMsg('No email found for this user.');
-      return;
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'http://localhost:5173/reset-password' // Update to the actual URL when done
-    });
-    if (error) {
-      setAccountMsg('Error sending reset email: ' + error.message);
-    } else {
-      setAccountMsg('Password reset email sent! Check your inbox.');
+    if (!newName || newName === userDetails.name) return;
+    
+    setIsUpdating(true);
+    setAccountMsg('');
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: newName }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update the UI to reflect the new name
+      setUser({ ...userDetails, name: newName });
+      setAccountMsg('Name updated successfully');
+    } catch (err: any) {
+      console.error('Error updating name:', err);
+      setAccountMsg(`Error updating name: ${err.message}`);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -196,14 +231,28 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       </div>
       {/* Tabs */}
       <div className="bg-black border-b border-white/10">
-        <div className="flex px-4 sm:px-6">
-          <button className={`py-3 px-4 font-medium text-sm border-b-2 ${activeTab === 'account' ? 'border-purple-500 text-white' : 'border-transparent text-white/60 hover:text-white/80'}`} onClick={() => setActiveTab('account')}>
+        <div className="flex px-4 sm:px-6" role="tablist" aria-label="Account tabs">
+          <button
+            role="tab"
+            aria-selected={activeTab === 'account'}
+            id="account-tab"
+            aria-controls="account-panel"
+            className={`py-3 px-4 font-medium text-sm border-b-2 ${activeTab === 'account' ? 'border-purple-500 text-white' : 'border-transparent text-white/60 hover:text-white/80'}`}
+            onClick={() => setActiveTab('account')}
+          >
             <div className="flex items-center">
               <UserIcon size={16} className="mr-2" />
               Account Details
             </div>
           </button>
-          <button className={`py-3 px-4 font-medium text-sm border-b-2 ${activeTab === 'subscription' ? 'border-purple-500 text-white' : 'border-transparent text-white/60 hover:text-white/80'}`} onClick={() => setActiveTab('subscription')}>
+          <button
+            role="tab"
+            aria-selected={activeTab === 'subscription'}
+            id="subscription-tab"
+            aria-controls="subscription-panel"
+            className={`py-3 px-4 font-medium text-sm border-b-2 ${activeTab === 'subscription' ? 'border-purple-500 text-white' : 'border-transparent text-white/60 hover:text-white/80'}`}
+            onClick={() => setActiveTab('subscription')}
+          >
             <div className="flex items-center">
               <CreditCardIcon size={16} className="mr-2" />
               Subscription
@@ -214,7 +263,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       {/* Tab content */}
       <div className="py-6 px-4 sm:px-6">
         {activeTab === 'account' && (
-          <div className="space-y-6">
+          <div role="tabpanel" id="account-panel" aria-labelledby="account-tab" className="space-y-6">
             <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
               <div className="px-4 py-5 sm:px-6 border-b border-white/10">
                 <h3 className="text-lg font-medium text-white">
@@ -228,19 +277,17 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 <form onSubmit={async (e) => {
                   e.preventDefault();
                   setAccountMsg("");
-                  setLoading(true);
-                  let nameChanged = newName && newName !== userDetails.name;
-                  let passwordChanged = newPassword && newPassword.length > 0;
-                  let msgArr = [];
+                  setIsUpdating(true);
+                  
                   try {
+                    const nameChanged = newName && newName !== userDetails.name;
+                    const msgArr = [];
+                    
                     if (nameChanged) {
                       await handleNameChange();
                       msgArr.push('Name updated');
                     }
-                    if (passwordChanged) {
-                      await handlePasswordChange();
-                      msgArr.push('Password updated');
-                    }
+                    
                     if (msgArr.length > 0) {
                       setAccountMsg(msgArr.join(' | '));
                     } else {
@@ -248,12 +295,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     }
                   } catch (err: any) {
                     setAccountMsg('Error updating account: ' + err.message);
+                  } finally {
+                    setIsUpdating(false);
                   }
-                  setLoading(false);
                 }} className="space-y-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-white/80">
-                      Full Name
+                      Name
                     </label>
                     <input
                       type="text"
@@ -265,7 +313,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       className="mt-1 block w-full rounded-md bg-white/5 border border-white/10 py-2 px-3 text-white shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
-                  <div className="flex flex-col items-start space-y-2">
+                  <div className="flex flex-col items-start space-y-2 mb-4">
                     <label className="block text-sm font-medium text-white/80">
                       Password
                     </label>
@@ -276,43 +324,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       Change Password
                     </a>
                   </div>
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end">
                     <button
                       type="button"
-                      disabled={loading}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90"
-                      onClick={async () => {
-                        setAccountMsg("");
-                        setLoading(true);
-                        try {
-                          await handleNameChange();
-                        } catch (err: any) {
-                          setAccountMsg('Error updating name: ' + err.message);
-                        }
-                        setLoading(false);
-                      }}
+                      disabled={isUpdating || !newName || newName === userDetails.name}
+                      className="px-6 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleNameChange}
                     >
-                      {loading ? 'Saving...' : 'Save Name'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loading}
-                      className="px-4 py-2 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 text-white rounded-lg transition-all hover:opacity-90"
-                      onClick={async () => {
-                        setAccountMsg("");
-                        setLoading(true);
-                        try {
-                          setAccountMsg('Updating password...');
-                          const { error } = await supabase.auth.updateUser({ password: newPassword });
-                          if (error) throw error;
-                          setAccountMsg('Password updated!');
-                        } catch (err: any) {
-                          setAccountMsg('Error updating password: ' + err.message);
-                        }
-                        setLoading(false);
-                      }}
-                    >
-                      {loading ? 'Saving...' : 'Save Password'}
+                      {isUpdating ? 'Saving...' : 'Save Name'}
                     </button>
                   </div>
                   {accountMsg && (
@@ -321,55 +340,12 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 </form>
               </div>
             </div>
-            <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-              <div className="px-4 py-5 sm:px-6 border-b border-white/10">
-                <h3 className="text-lg font-medium text-white">
-                  Notification Preferences
-                </h3>
-                <p className="mt-1 text-sm text-white/70">
-                  Manage how we contact you
-                </p>
-              </div>
-              <div className="px-4 py-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                      <input id="email_updates" name="email_updates" type="checkbox" defaultChecked className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                    </div>
-                    <div className="ml-3">
-                      <label htmlFor="email_updates" className="text-sm font-medium text-white">
-                        Email Updates
-                      </label>
-                      <p className="text-sm text-white/60">
-                        Receive product updates and news
-                      </p>
-                    </div>
-                  </div>
-                  <BellIcon size={18} className="text-white/60" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                      <input id="billing_alerts" name="billing_alerts" type="checkbox" defaultChecked className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                    </div>
-                    <div className="ml-3">
-                      <label htmlFor="billing_alerts" className="text-sm font-medium text-white">
-                        Billing Alerts
-                      </label>
-                      <p className="text-sm text-white/60">
-                        Receive billing and payment notifications
-                      </p>
-                    </div>
-                  </div>
-                  <BellIcon size={18} className="text-white/60" />
-                </div>
-              </div>
-            </div>
+
           </div>
         )}
         {activeTab === 'subscription' && (
-          <div className="space-y-6">
-            {loading ? (
+          <div role="tabpanel" id="subscription-panel" aria-labelledby="subscription-tab" className="space-y-6">
+            {isLoading ? (
               <div className="text-white text-center py-10">Loading subscription info...</div>
             ) : error ? (
               <div className="text-red-400 text-center py-10">{error}</div>
@@ -392,6 +368,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       <h4 className="text-xl font-bold text-white">{getPlanName()}</h4>
                       <p className="text-white/70">{getPlanPrice()}</p>
                     </div>
+                    {/* CTA: show Subscribe unless active; otherwise route to portal. */}
                     {(noProfile || !subscribed || status !== 'active') ? (
                       <div className="mb-6 flex justify-center">
                         <a

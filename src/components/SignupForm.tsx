@@ -137,7 +137,7 @@ export const SignupForm: React.FC<SignupFormProps> = () => {
     <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4">
       <div className="relative bg-gradient-to-br from-black/70 to-gray-900/80 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-8 mx-4">
         <h2 className="text-2xl font-bold text-center text-white mb-6">Sign Up</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
           <div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-white/50">

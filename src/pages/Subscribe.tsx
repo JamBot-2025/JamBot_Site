@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 import { supabase } from '../supabaseClient';
+// FUNCTIONALITY: This page checks the current subscription status and your Stripe customer info + creates a Stripe checkout session.
 
 async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: boolean; plan?: string | null; status?: string | null; nextBillingDate?: string | null }> {
   const { data, error } = await supabase

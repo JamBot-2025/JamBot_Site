@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MenuIcon, XIcon, UserIcon } from 'lucide-react';
+// FUNCTIONALITY: Site header and navigation, including login/signup or account button when signed in.
 
 interface HeaderProps {
   user: any;

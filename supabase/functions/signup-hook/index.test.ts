@@ -1,5 +1,7 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
+import { describe, it, expect } from 'vitest';
 
-Deno.test("dummy test: always passes", () => {
-  assertEquals(2 * 2, 4);
+describe('signup-hook edge function (node test shim)', () => {
+  it('dummy test: always passes', () => {
+    expect(2 * 2).toBe(4);
+  });
 });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+// FUNCTIONALITY: Change password page for signed-in users (old password required).
 
 const ChangePasswordPage: React.FC = () => {
   const [oldPassword, setOldPassword] = useState('');

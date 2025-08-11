@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.16.0?target=deno";
+import { processSignup } from "./lib.ts";
 
 //FUNCTIONALITY: Creates a new profile  row into Supabase.
 
@@ -30,20 +31,6 @@ serve(async (req) => {
 
   const { id, email, name } = await req.json();
 
-  // 1. Create Stripe customer
-  let customer;
-  try {
-    customer = await stripe.customers.create({
-      email,
-      name,
-      metadata: { user_id: id }
-    });
-  } catch (err) {
-    console.error("Stripe customer creation failed:", err);
-    return withCorsHeaders(new Response("Stripe customer creation failed", { status: 500 }));
-  }
-
-  // 2. Insert profile row into Supabase
   // Import the Supabase client
   const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.7");
   const supabase = createClient(
@@ -51,20 +38,16 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const { error: insertError } = await supabase
-    .from("profiles")
-    .insert([
-      {
-        id,
-        name,
-        stripe_customer_id: customer.id
-      }
-    ]);
+  // Delegate to shared helper for consistent behavior and testable logic
+  const result = await processSignup(
+    { id, email, name },
+    { stripe: stripe as any, supabase: supabase as any }
+  );
 
-  // If error is not unique violation (row already exists), return error
-  if (insertError && insertError.code !== "23505") {
-    console.error("Profile row creation failed:", insertError);
-    return withCorsHeaders(new Response("Profile row creation failed", { status: 500 }));
+  if (!result.ok) {
+    const where = (result as any).error?.where;
+    console.error(`[signup-hook] ${where} error:`, (result as any).error?.err);
+    return withCorsHeaders(new Response("Signup processing failed", { status: 500 }));
   }
 
   return withCorsHeaders(new Response("Success", { status: 200 }));

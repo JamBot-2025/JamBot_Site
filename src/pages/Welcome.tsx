@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+// FUNCTIONALITY: One-time setup page that ensures a profile row exists, then routes to the account page.
 
 const Welcome: React.FC = () => {
   const navigate = useNavigate();

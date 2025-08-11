@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { MailIcon, LockIcon } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
+import { useNavigate } from 'react-router-dom';
+// FUNCTIONALITY: User login form with validation, Supabase auth, and password reset.
+
 interface LoginFormProps {
   onLoginSuccess?: () => void;
 }
-
-import { useNavigate } from 'react-router-dom';
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({

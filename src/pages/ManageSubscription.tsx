@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
+// FUNCTIONALITY: Manage billing by creating a Stripe Customer Portal session for the signed-in user.
 
 const ManageSubscription: React.FC = () => {
   const [loading, setLoading] = useState(false);

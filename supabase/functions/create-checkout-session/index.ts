@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "npm:stripe@12.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { createCheckoutSession } from "./lib.ts";
 
 //FUNCTIONALITY: Creates a checkout session for a user to subscribe to a plan.//
 
@@ -33,48 +34,25 @@ serve(async (req) => {
   }
   try {
     const { userId, email } = await req.json();
-    if (!userId || !email) {
-      return withCorsHeaders(new Response(JSON.stringify({ error: "Missing userId or email" }), { status: 400 }));
+
+    const priceId = Deno.env.get("STRIPE_TEST_PRICE_ID")!;
+    const successUrl = "http://localhost:5173/account?success=true";
+    const cancelUrl = "http://localhost:5173/subscribe";
+
+    const result = await createCheckoutSession(
+      { userId, email },
+      { stripe: stripe as any, supabase: supabase as any },
+      { priceId, successUrl, cancelUrl },
+    );
+
+    if (result.ok) {
+      return withCorsHeaders(new Response(JSON.stringify({ url: result.url }), {
+        headers: { "Content-Type": "application/json" }
+      }));
+    } else {
+      const status = result.error.where === 'input' ? 400 : 500;
+      return withCorsHeaders(new Response(JSON.stringify({ error: String(result.error.err?.message || result.error.err || 'error') }), { status }));
     }
-
-    // 1. Get profile
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("stripe_customer_id")
-      .eq("id", userId)
-      .single();
-
-    let stripeCustomerId = profile?.stripe_customer_id;
-
-    // 2. If no Stripe customer, create one and update profile
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email,
-        metadata: { supabase_user_id: userId }
-      });
-      stripeCustomerId = customer.id;
-      await supabase
-        .from("profiles")
-        .update({ stripe_customer_id: stripeCustomerId })
-        .eq("id", userId);
-    }
-
-    // 3. Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "subscription",
-      customer: stripeCustomerId,
-      line_items: [
-        { price: Deno.env.get("STRIPE_TEST_PRICE_ID"), quantity: 1 }
-      ],
-      //Change these to match eventual site name//
-      success_url: "http://localhost:5173/account?success=true",
-      cancel_url: "http://localhost:5173/subscribe"
-    });
-
-    return withCorsHeaders(new Response(JSON.stringify({ url: session.url }), {
-      headers: { "Content-Type": "application/json" }
-    }));
   } catch (err) {
     console.error("[create-checkout-session] Error:", err);
     return withCorsHeaders(new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 }));
