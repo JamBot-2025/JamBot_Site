@@ -1,7 +1,8 @@
-import React from 'react';
-import { CheckIcon, ZapIcon, TagIcon, ArrowRightIcon } from 'lucide-react';
+import { CheckIcon, ZapIcon, TagIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const PricingSection = () => {
+  const navigate = useNavigate();
   const features = ['5 projects', '10GB storage', 'Basic analytics', 'Email support', 'Access to all core features', 'Regular updates'];
   return <section id="pricing" className="w-full bg-black py-20 relative overflow-hidden">
       <div className="absolute inset-0">
@@ -29,7 +30,18 @@ export const PricingSection = () => {
           </p>
         </div>
         <div className="max-w-md mx-auto">
-          <div className="relative bg-black rounded-xl border border-purple-500 shadow-lg shadow-purple-500/10 transition-all hover-card reveal-on-scroll">
+          <div
+            className="relative bg-black rounded-xl border border-purple-500 shadow-lg shadow-purple-500/10 transition-all hover-card reveal-on-scroll cursor-pointer"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/subscribe')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate('/subscribe');
+              }
+            }}
+          >
             <div className="absolute -top-3 left-0 right-0 mx-auto w-max bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold py-1 px-3 rounded-full">
               PREORDER SPECIAL
             </div>

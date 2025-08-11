@@ -18,7 +18,7 @@ describe('Header', () => {
   });
 
   it('renders desktop nav links with correct hrefs', () => {
-    render(<Header user={null} />);
+    render(<Header user={null} authChecked={true} />);
 
     const features = screen.getAllByRole('link', { name: /features/i })[0];
     const pricing = screen.getAllByRole('link', { name: /pricing/i })[0];
@@ -30,7 +30,7 @@ describe('Header', () => {
   });
 
   it('shows Sign Up / Login when user is not authenticated (desktop) and navigates on click', () => {
-    render(<Header user={null} />);
+    render(<Header user={null} authChecked={true} />);
 
     const loginBtn = screen.getByRole('button', { name: /sign up \/ login/i });
     fireEvent.click(loginBtn);
@@ -39,7 +39,7 @@ describe('Header', () => {
   });
 
   it('shows My Account when user is authenticated (desktop) and navigates on click', () => {
-    render(<Header user={{ id: 'user-1' }} />);
+    render(<Header user={{ id: 'user-1' }} authChecked={true} />);
 
     const accountBtn = screen.getByRole('button', { name: /my account/i });
     fireEvent.click(accountBtn);
@@ -48,7 +48,7 @@ describe('Header', () => {
   });
 
   it('toggles mobile menu and navigates to account when user is authenticated (mobile)', () => {
-    render(<Header user={{ id: 'user-2' }} />);
+    render(<Header user={{ id: 'user-2' }} authChecked={true} />);
 
     // Mobile menu should be closed initially (container with # links absent)
     expect(document.querySelector('a[href="#pricing"]')).not.toBeInTheDocument();
@@ -79,7 +79,7 @@ describe('Header', () => {
   });
 
   it('toggles mobile menu and navigates to login when user is not authenticated (mobile)', () => {
-    render(<Header user={null} />);
+    render(<Header user={null} authChecked={true} />);
 
     // Open mobile menu
     const toggleBtn = screen.getAllByRole('button').find(

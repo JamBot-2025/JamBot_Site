@@ -1,6 +1,8 @@
-import React from 'react';
 import { ArrowRightIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
 export const HeroSection = () => {
+  const navigate = useNavigate();
   return <section className="w-full bg-black py-20 relative overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/15 to-green-600/20 animate-gradient-flow blur-3xl opacity-60"></div>
@@ -24,7 +26,10 @@ export const HeroSection = () => {
             streamline your daily tasks. Experience the future of work today.
           </p>
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-            <button className="px-8 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-colors text-lg font-medium flex items-center justify-center hover:opacity-90">
+            <button
+              className="px-8 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-colors text-lg font-medium flex items-center justify-center hover:opacity-90"
+              onClick={() => navigate('/subscribe')}
+            >
               Get Started
               <ArrowRightIcon size={20} className="ml-2" />
             </button>

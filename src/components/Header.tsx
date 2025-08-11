@@ -5,9 +5,10 @@ import { MenuIcon, XIcon, UserIcon } from 'lucide-react';
 
 interface HeaderProps {
   user: any;
+  authChecked: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user }) => {
+export const Header: React.FC<HeaderProps> = ({ user, authChecked }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -31,7 +32,10 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
           <a href="/#contact" className="text-white hover:text-blue-400 transition-colors">
             Contact
           </a>
-          {user ? (
+          {!authChecked ? (
+            // Skeleton to avoid flicker and prevent clicks before auth status is known
+            <div className="w-32 h-9 rounded-lg bg-white/10 animate-pulse" aria-hidden />
+          ) : user ? (
             <button
               className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-colors hover:opacity-90"
               onClick={() => navigate('/account')}
@@ -69,7 +73,10 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
             <a href="#contact" className="py-2 text-white hover:text-blue-400 transition-colors">
               Contact
             </a>
-            {user ? (
+            {!authChecked ? (
+              // Mobile skeleton placeholder while auth is resolving
+              <div className="w-full h-10 rounded-lg bg-white/10 animate-pulse" aria-hidden />
+            ) : user ? (
               <button
                 className="flex items-center justify-center w-full px-6 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-colors text-center hover:opacity-90"
                 onClick={() => {

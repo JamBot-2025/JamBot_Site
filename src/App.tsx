@@ -1,6 +1,6 @@
 import React from 'react';
 import Welcome from './pages/Welcome';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { FeaturesSection } from './components/FeaturesSection';
@@ -65,7 +65,7 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <Header user={user} />
+      <Header user={user} authChecked={authChecked} />
       <React.Suspense fallback={<div>Loading...</div>}>
         <Routes>
       <Route path="/welcome" element={<Welcome />} />
@@ -81,13 +81,19 @@ export function App() {
             <SubscribePage user={user} authChecked={authChecked} />
           } />
           <Route path="/account" element={
-            <AccountPage
-              userDetails={{
-                name: user?.user_metadata?.full_name || user?.email || '',
-                email: user?.email || ''
-              }}
-              setUser={setUser}
-            />
+            !authChecked ? (
+              <div className="text-white p-10">Loading account...</div>
+            ) : user ? (
+              <AccountPage
+                userDetails={{
+                  name: user?.user_metadata?.full_name || user?.email || '',
+                  email: user?.email || ''
+                }}
+                setUser={setUser}
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
           } />
           <Route path="/manageSubscription" element={<ManageSubscription />} />
           <Route path="/signup" element={<SignupForm />} />
