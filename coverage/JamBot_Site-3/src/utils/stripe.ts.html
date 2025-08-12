@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">27.58% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/29</span>
+                <span class='fraction'>0/29</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">25% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/4</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">27.58% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/29</span>
+                <span class='fraction'>0/29</span>
             </div>
         
             
@@ -103,16 +103,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -121,12 +111,22 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -139,16 +139,16 @@
 import { loadStripe } from '@stripe/stripe-js';
 // Mock implementation for development
 // This creates a mock Stripe object that doesn't actually connect to Stripe
-const createMockStripe = () =&gt; {
-  return {
-    elements: <span class="fstat-no" title="function not covered" >() =&gt; ({</span>
+<span class="cstat-no" title="statement not covered" >const createMockStripe = () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  return {</span>
+<span class="cstat-no" title="statement not covered" >    elements: () =&gt; ({</span>
 <span class="cstat-no" title="statement not covered" >      create: () =&gt; ({</span>
 <span class="cstat-no" title="statement not covered" >        mount: () =&gt; {},</span>
 <span class="cstat-no" title="statement not covered" >        on: () =&gt; {},</span>
 <span class="cstat-no" title="statement not covered" >        unmount: () =&gt; {}</span>
 <span class="cstat-no" title="statement not covered" >      })</span>
 <span class="cstat-no" title="statement not covered" >    }),</span>
-    createPaymentMethod: <span class="fstat-no" title="function not covered" >() =&gt; Promise.resolve({</span>
+<span class="cstat-no" title="statement not covered" >    createPaymentMethod: () =&gt; Promise.resolve({</span>
 <span class="cstat-no" title="statement not covered" >      paymentMethod: {</span>
 <span class="cstat-no" title="statement not covered" >        id: 'pm_' + Math.random().toString(36).substring(2, 15),</span>
 <span class="cstat-no" title="statement not covered" >        card: {</span>
@@ -157,12 +157,12 @@ const createMockStripe = () =&gt; {
 <span class="cstat-no" title="statement not covered" >        }</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    })</span>
-  };
-};
+<span class="cstat-no" title="statement not covered" >  };</span>
+<span class="cstat-no" title="statement not covered" >};</span>
 // Export a mock Stripe promise for development
-export const stripePromise = Promise.resolve(createMockStripe());
+<span class="cstat-no" title="statement not covered" >export const stripePromise = Promise.resolve(createMockStripe());</span>
 // Mock function to create a subscription
-export const createSubscription = <span class="fstat-no" title="function not covered" >async (email: string, paymentMethod: string) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >export const createSubscription = async (email: string, paymentMethod: string) =&gt; {</span>
   // Simulate API call delay
 <span class="cstat-no" title="statement not covered" >  await new Promise(resolve =&gt; setTimeout(resolve, 1000));</span>
   // Return a mock successful response
@@ -178,7 +178,7 @@ export const createSubscription = <span class="fstat-no" title="function not cov
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-11T19:53:59.081Z
+                at 2025-08-12T00:34:47.944Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

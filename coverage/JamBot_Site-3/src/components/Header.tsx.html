@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">98.61% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>68/68</span>
+                <span class='fraction'>71/72</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">93.75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>15/16</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">98.61% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>68/68</span>
+                <span class='fraction'>71/72</span>
             </div>
         
             
@@ -162,7 +162,15 @@
 <a name='L97'></a><a href='#L97'>97</a>
 <a name='L98'></a><a href='#L98'>98</a>
 <a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -170,6 +178,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -195,6 +205,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
@@ -203,12 +216,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -232,6 +245,9 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -264,12 +280,14 @@
 <span class="cline-any cline-yes">11x</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MenuIcon, XIcon, UserIcon } from 'lucide-react';
+// FUNCTIONALITY: Site header and navigation, including login/signup or account button when signed in.
 &nbsp;
 interface HeaderProps {
   user: any;
+  authChecked: boolean;
 }
 &nbsp;
-export const Header: React.FC&lt;HeaderProps&gt; = ({ user }) =&gt; {
+export const Header: React.FC&lt;HeaderProps&gt; = ({ user, authChecked }) =&gt; {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 &nbsp;
   const navigate = useNavigate();
@@ -293,7 +311,10 @@ export const Header: React.FC&lt;HeaderProps&gt; = ({ user }) =&gt; {
           &lt;a href="/#contact" className="text-white hover:text-blue-400 transition-colors"&gt;
             Contact
           &lt;/a&gt;
-          {user ? (
+          {!authChecked ? (
+            // Skeleton to avoid flicker and prevent clicks before auth status is known
+            &lt;div className="w-32 h-9 rounded-lg bg-white/10 animate-pulse" aria-hidden /&gt;
+          ) : user ? (
             &lt;button
               className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-colors hover:opacity-90"
               onClick={() =&gt; navigate('/account')}
@@ -331,7 +352,10 @@ export const Header: React.FC&lt;HeaderProps&gt; = ({ user }) =&gt; {
             &lt;a href="#contact" className="py-2 text-white hover:text-blue-400 transition-colors"&gt;
               Contact
             &lt;/a&gt;
-            {user ? (
+            {!<span class="branch-0 cbranch-no" title="branch not covered" >authChecked ? (</span>
+              // Mobile skeleton placeholder while auth is resolving
+<span class="cstat-no" title="statement not covered" >              &lt;div className="w-full h-10 rounded-lg bg-white/10 animate-pulse" aria-hidden /&gt;</span>
+            ) : user ? (
               &lt;button
                 className="flex items-center justify-center w-full px-6 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-lg transition-colors text-center hover:opacity-90"
                 onClick={() =&gt; {
@@ -367,7 +391,7 @@ export const Header: React.FC&lt;HeaderProps&gt; = ({ user }) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-11T19:53:59.081Z
+                at 2025-08-12T00:34:47.944Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

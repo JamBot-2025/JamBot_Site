@@ -118,7 +118,9 @@ describe('AccountPage', () => {
   });
 
   it('updates user name successfully', async () => {
-    (supabase.auth.getUser as any).mockResolvedValue({ data: { user: { id: 'user-4' } } });
+    (supabase.auth.getUser as any)
+      .mockResolvedValueOnce({ data: { user: { id: 'user-4' } } })
+      .mockResolvedValueOnce({ data: { user: { id: 'user-4', user_metadata: { full_name: 'New Name' } } } });
     (supabase.from as any).mockReturnValue({
       select: () => ({
         eq: () => ({
@@ -147,7 +149,13 @@ describe('AccountPage', () => {
       expect(supabase.auth.updateUser).toHaveBeenCalledWith({
         data: { full_name: 'New Name' }
       });
-      expect(setUser).toHaveBeenCalledWith(expect.objectContaining({ name: 'New Name' }));
+      // The app updates global user with the fresh Supabase User object
+      // after refreshing the session, so validate user_metadata.full_name.
+      expect(setUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_metadata: expect.objectContaining({ full_name: 'New Name' })
+        })
+      );
     });
     
     // Check for success message

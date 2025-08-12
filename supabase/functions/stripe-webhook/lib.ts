@@ -125,14 +125,20 @@ export async function handleStripeEvent(supabase: SupabaseClientLike, event: Str
     // Invoice paid/succeeded: mark status active and set next billing from invoice
     case 'invoice.paid':
     case 'invoice.payment_succeeded': {
-      // Invoice object schema differs from Subscription; compute fields safely
+      // Invoice object schema differs from Subscription; compute fields safely.
+      // Some tests/events may provide subscription-like `items` instead of invoice `lines`.
       const invoice = event.data.object;
       const customerId = invoice.customer;
       // On paid/succeeded, we can confidently mark status to active
       const status = 'active';
-      const line = invoice.lines?.data?.[0];
+      const line = invoice.lines?.data?.[0] ?? invoice.items?.data?.[0];
       const plan = line?.price?.nickname || line?.price?.id || null;
-      const periodEnd = line?.period?.end ?? invoice.period_end;
+      const periodEnd =
+        line?.period?.end ??
+        line?.current_period_end ??
+        invoice.period_end ??
+        invoice.current_period_end ??
+        null;
       const nextBillingDate = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
       const { error } = await supabase
         .from('profiles')

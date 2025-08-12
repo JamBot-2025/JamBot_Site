@@ -112,24 +112,20 @@
 <a name='L47'></a><a href='#L47'>47</a>
 <a name='L48'></a><a href='#L48'>48</a>
 <a name='L49'></a><a href='#L49'>49</a>
-<a name='L50'></a><a href='#L50'>50</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -143,11 +139,25 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -165,6 +175,9 @@
 // POST { customerId: string }
 <span class="cstat-no" title="statement not covered" >import { serve } from "https://deno.land/std@0.224.0/http/server.ts";</span>
 <span class="cstat-no" title="statement not covered" >import Stripe from "https://esm.sh/stripe@12.14.0?target=denonext";</span>
+<span class="cstat-no" title="statement not covered" >import { createCustomerPortalSession } from "./lib.ts";</span>
+// FUNCTIONALITY: Customer Portal entrypoint; creates a Stripe Billing Portal session for a customer.
+&nbsp;
 // NOTE: Set verify_jwt = false in supabase/config.toml for this function if you get 401 errors from frontend
 &nbsp;
 <span class="cstat-no" title="statement not covered" >const stripe = new Stripe(Deno.env.get("STRIPE_TEST_SECRET_KEY")!, { apiVersion: "2023-10-16" });</span>
@@ -189,22 +202,24 @@
 <span class="cstat-no" title="statement not covered" >    return withCorsHeaders(new Response("Method Not Allowed", { status: 405 }));</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    const body = await req.json();</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[customer-portal] Incoming body:", body);</span>
-<span class="cstat-no" title="statement not covered" >    const stripeKey = Deno.env.get("STRIPE_TEST_SECRET_KEY");</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[customer-portal] Stripe key present:", !!stripeKey);</span>
-<span class="cstat-no" title="statement not covered" >    const customerId = body.customerId;</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[customer-portal] customerId:", customerId);</span>
-<span class="cstat-no" title="statement not covered" >    if (!customerId) {</span>
-<span class="cstat-no" title="statement not covered" >      return withCorsHeaders(new Response(JSON.stringify({ error: "Missing customerId" }), { status: 400 }));</span>
+<span class="cstat-no" title="statement not covered" >    const { customerId } = await req.json();</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    const returnUrl = "http://localhost:5173/account"; // TODO: update to real return URL</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    const result = await createCustomerPortalSession(</span>
+<span class="cstat-no" title="statement not covered" >      { customerId },</span>
+<span class="cstat-no" title="statement not covered" >      { stripe: stripe as any },</span>
+<span class="cstat-no" title="statement not covered" >      { returnUrl },</span>
+<span class="cstat-no" title="statement not covered" >    );</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    if (result.ok) {</span>
+<span class="cstat-no" title="statement not covered" >      return withCorsHeaders(new Response(JSON.stringify({ url: result.url }), {</span>
+<span class="cstat-no" title="statement not covered" >        headers: { "Content-Type": "application/json" }</span>
+<span class="cstat-no" title="statement not covered" >      }));</span>
+<span class="cstat-no" title="statement not covered" >    } else {</span>
+<span class="cstat-no" title="statement not covered" >      const status = result.error.where === 'input' ? 400 : 500;</span>
+<span class="cstat-no" title="statement not covered" >      return withCorsHeaders(new Response(JSON.stringify({ error: String(result.error.err?.message || result.error.err || 'error') }), { status }));</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >    const session = await stripe.billingPortal.sessions.create({</span>
-<span class="cstat-no" title="statement not covered" >      customer: customerId,</span>
-<span class="cstat-no" title="statement not covered" >      return_url: "http://localhost:5173/account" // TODO: update to real return URL</span>
-<span class="cstat-no" title="statement not covered" >    });</span>
-<span class="cstat-no" title="statement not covered" >    return withCorsHeaders(new Response(JSON.stringify({ url: session.url }), {</span>
-<span class="cstat-no" title="statement not covered" >      headers: { "Content-Type": "application/json" }</span>
-<span class="cstat-no" title="statement not covered" >    }));</span>
 <span class="cstat-no" title="statement not covered" >  } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >    console.error("[create-customer-portal-session] Error:", err);</span>
 <span class="cstat-no" title="statement not covered" >    return withCorsHeaders(new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 }));</span>
@@ -217,7 +232,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-11T19:53:59.081Z
+                at 2025-08-12T00:34:47.944Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
