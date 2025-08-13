@@ -126,6 +126,34 @@ describe('handleStripeEvent', () => {
       next_billing_date: null,
     });
   });
+
+  it('sets expired status on subscription expired', async () => {
+    const { supabase, calls } = makeSupabaseMock();
+    const event: StripeEvent = {
+      type: 'customer.subscription.expired',
+      data: { object: { customer: 'cus_exp' } },
+    };
+    const res = await handleStripeEvent(supabase, event);
+    expect(res.error).toBeNull();
+    const updateCall = calls.find(c => c.type === 'update');
+    expect(updateCall.values).toEqual({ subscription_status: 'expired' });
+    expect(updateCall.col).toBe('stripe_customer_id');
+    expect(updateCall.val).toBe('cus_exp');
+  });
+
+  it('sets past_due on invoice.payment_failed', async () => {
+    const { supabase, calls } = makeSupabaseMock();
+    const event: StripeEvent = {
+      type: 'invoice.payment_failed',
+      data: { object: { customer: 'cus_due' } },
+    };
+    const res = await handleStripeEvent(supabase, event);
+    expect(res.error).toBeNull();
+    const updateCall = calls.find(c => c.type === 'update');
+    expect(updateCall.values).toEqual({ subscription_status: 'past_due' });
+    expect(updateCall.col).toBe('stripe_customer_id');
+    expect(updateCall.val).toBe('cus_due');
+  });
 });
 
 describe('signature verification helpers', () => {

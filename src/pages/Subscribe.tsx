@@ -27,7 +27,6 @@ async function fetchSubscriptionStatus(userId: string): Promise<{ subscribed: bo
   };
 }
 
-const STRIPE_PRICE_ID = 'price_1RkWlkB4eW6h7F0TzqtG61CI'; // Replace with actual price id
 
 interface SubscribePageProps {
   user: any;
@@ -63,53 +62,7 @@ export const SubscribePage: React.FC<SubscribePageProps> = ({ user, authChecked 
       });
   }, [user, navigate]);
 
-  const handleSubscribe = async () => {
-    console.log('Subscription info:', { subscribed, plan, status, nextBillingDate });
-    if (!user) {
-      setError("You must be logged in to subscribe.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      // Call your backend to create Stripe customer and checkout session
-      const customerRes = await fetch('https://mcsqxmsvyckabbgefixy.functions.supabase.co/create-stripe-customer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          name: user.user_metadata?.full_name || user.email,
-          user_id: user.id,
-        })
-      });
-      const customerData = await customerRes.json();
-      if (!customerRes.ok || !customerData.customer_id) {
-        setError(customerData.error || 'Failed to create Stripe customer.');
-        setLoading(false);
-        return;
-      }
-      const checkoutRes = await fetch('https://mcsqxmsvyckabbgefixy.functions.supabase.co/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_id: customerData.customer_id,
-          price_id: STRIPE_PRICE_ID,
-          success_url: window.location.origin + '/account',
-          cancel_url: window.location.origin + '/subscribe',
-        })
-      });
-      const checkoutData = await checkoutRes.json();
-      if (checkoutData.url) {
-        window.location.href = checkoutData.url;
-      } else {
-        setError('Failed to create Stripe Checkout session.');
-        setLoading(false);
-      }
-    } catch (err) {
-      setError('An error occurred during subscription.');
-      setLoading(false);
-    }
-  };
+  
 
   if (loading)  return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
