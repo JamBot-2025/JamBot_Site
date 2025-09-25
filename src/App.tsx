@@ -65,46 +65,55 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <Header user={user} authChecked={authChecked} />
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-      <Route path="/welcome" element={<Welcome />} />
-          <Route path="/" element={
-            <>
-              <HeroSection />
-              <FeaturesSection />
-              <PricingSection />
-              <CTASection />
-            </>
-          } />
-          <Route path="/subscribe" element={
-            <SubscribePage user={user} authChecked={authChecked} />
-          } />
-          <Route path="/account" element={
-            !authChecked ? (
-              <div className="text-white p-10">Loading account...</div>
-            ) : user ? (
-              <AccountPage
-                userDetails={{
-                  name: user?.user_metadata?.full_name || user?.email || '',
-                  email: user?.email || ''
-                }}
-                setUser={setUser}
-              />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } />
-          <Route path="/manageSubscription" element={<ManageSubscription />} />
-          <Route path="/signup" element={<SignupForm />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/success" element={<div className="text-white p-10">Subscription Successful!</div>} />
-          <Route path="/cancel" element={<div className="text-white p-10">Subscription Cancelled.</div>} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/change-password" element={<ChangePasswordPage />} />
-        </Routes>
-      </React.Suspense>
-      <FooterSection />
+      <div className="relative min-h-[320px] bg-black overflow-hidden rounded-xl">
+        {/* moving color blobs */}
+        <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-purple-500/30 blur-3xl mix-blend-screen animate-blob"></div>
+        <div className="pointer-events-none absolute top-28 -right-32 h-96 w-96 rounded-full bg-blue-500/30 blur-3xl mix-blend-screen animate-blob [animation-delay:2s]"></div>
+        <div className="pointer-events-none absolute -bottom-32 left-1/4 h-96 w-96 rounded-full bg-emerald-500/30 blur-3xl mix-blend-screen animate-blob [animation-delay:4s]"></div>
+        <div className="relative p-8 text-white">
+                  {/* Background removed to let yellow show through */}
+                <Header user={user} authChecked={authChecked} />
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <Routes>
+                <Route path="/welcome" element={<Welcome />} />
+                    <Route path="/" element={
+                      <>
+                        <HeroSection />
+                        <FeaturesSection />
+                        <PricingSection />
+                        <CTASection />
+                      </>
+                    } />
+                    <Route path="/subscribe" element={
+                      <SubscribePage user={user} authChecked={authChecked} />
+                    } />
+                    <Route path="/account" element={
+                      !authChecked ? (
+                        <div className="text-white p-10">Loading account...</div>
+                      ) : user ? (
+                        <AccountPage
+                          userDetails={{
+                            name: user?.user_metadata?.full_name || user?.email || '',
+                            email: user?.email || ''
+                          }}
+                          setUser={setUser}
+                        />
+                      ) : (
+                        <Navigate to="/login" replace />
+                      )
+                    } />
+                    <Route path="/manageSubscription" element={<ManageSubscription />} />
+                    <Route path="/signup" element={<SignupForm />} />
+                    <Route path="/login" element={<LoginForm />} />
+                    <Route path="/success" element={<div className="text-white p-10">Subscription Successful!</div>} />
+                    <Route path="/cancel" element={<div className="text-white p-10">Subscription Cancelled.</div>} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/change-password" element={<ChangePasswordPage />} />
+                  </Routes>
+                </React.Suspense>
+                <FooterSection />
+            </div>
+          </div>
     </BrowserRouter>
   );
 }

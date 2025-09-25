@@ -14,6 +14,12 @@
     transform: scale(1) rotate(0deg);
   }
 }
+@keyframes blob {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(35%, -20%) scale(1.3); }
+  66%      { transform: translate(-25%, 25%) scale(0.8); }
+}
+.animate-blob { animation: blob 12s ease-in-out infinite; }
 @keyframes pulse-glow {
   0%, 100% {
     opacity: 0.3;
@@ -106,6 +112,34 @@
 .hover-card:hover {
   transform: translateY(-5px);
 }
+/* Global styles for the app background */
+body {
+  background-color: black;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Proper z-indexing for components */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+/* Component layering */
+section, footer {
+  position: relative;
+  z-index: 10;
+  background-color: transparent;
+}
+
+/* Ensure no seams between sections */
+section + section {
+  margin-top: -1px;
+}
+
 /* Custom scrollbar styles */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;

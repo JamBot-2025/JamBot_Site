@@ -10,7 +10,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
 }) => {
   if (!isOpen) return null;
   return <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-      <div className="relative w-full max-w-2xl max-h-[80vh] bg-black rounded-xl border border-white/10 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-2xl max-h-[80vh] bg-transparent rounded-xl border border-white/10 shadow-2xl overflow-hidden">
         <div className="absolute top-0 inset-x-0">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-pink-600/30 animate-gradient-flow blur-xl opacity-70"></div>
         </div>

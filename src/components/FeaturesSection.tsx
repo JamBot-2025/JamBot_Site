@@ -24,35 +24,27 @@ export const FeaturesSection = () => {
 
   const features = [{
     icon: <ZapIcon size={24} className="text-green-500" />,
-    title: 'Lightning Fast',
+    title: 'Jam Along',
     description: 'Our app is optimized for speed, ensuring you never wait for data to load or actions to complete.',
     color: 'from-green-500 to-blue-500'
   }, {
     icon: <ZapIcon size={24} className="text-purple-500" />,
-    title: 'Data Analytics',
+    title: 'Cowriter',
     description: 'Powerful analytics tools to help you understand your performance and make data-driven decisions.',
     color: 'from-purple-500 to-pink-500'
   }, {
     icon: <UsersIcon size={24} className="text-blue-500" />,
-    title: 'Team Collaboration',
+    title: 'Show your friends',
     description: 'Work together seamlessly with your team members in real-time, no matter where they are.',
     color: 'from-blue-500 to-indigo-500'
   }, {
     icon: <ShieldIcon size={24} className="text-pink-500" />,
-    title: 'Enterprise Security',
+    title: 'Edit your creation',
     description: 'Best-in-class security measures to keep your data protected and your mind at ease.',
     color: 'from-pink-500 to-red-500'
   }];
 
-  return <section ref={sectionRef} id="features" className="w-full bg-black py-20 relative overflow-hidden">
-    <div className="absolute inset-0">
-      <div className="absolute inset-0 bg-gradient-to-bl from-blue-600/15 via-transparent to-purple-600/15 animate-gradient-shift blur-3xl opacity-60" style={{
-        animationDelay: '-12s'
-      }}></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 via-transparent to-blue-600/10 animate-gradient-flow blur-2xl opacity-70" style={{
-        animationDelay: '-4s'
-      }}></div>
-    </div>
+  return <section ref={sectionRef} id="features" className="w-full bg-transparent py-20 relative">
     <div className="container mx-auto px-4 relative">
       <div className="text-center mb-16 reveal-on-scroll">
         <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
@@ -64,7 +56,7 @@ export const FeaturesSection = () => {
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {features.map((feature, index) => <div key={index} className="hover-card bg-black p-6 rounded-xl border border-white/10 hover:border-white/30 transition-all duration-300 reveal-on-scroll" style={{
+        {features.map((feature, index) => <div key={index} className="hover-card bg-transparent p-6 rounded-xl border border-white/10 hover:border-white/30 transition-all duration-300 reveal-on-scroll" style={{
           animationDelay: `${index * 100}ms`
         }}>
           <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} bg-opacity-10 rounded-lg flex items-center justify-center mb-4 animate-float`}>
@@ -77,14 +69,10 @@ export const FeaturesSection = () => {
         </div>)}
       </div>
       <div className="mt-20">
-        <div className="bg-black rounded-2xl p-8 md:p-12 border border-white/10 relative overflow-hidden">
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/15 via-transparent to-green-600/15 animate-gradient-flow blur-2xl opacity-70" style={{
-              animationDelay: '-7s'
-            }}></div>
-          </div>
+        <div className="bg-transparent rounded-2xl p-8 md:p-12 border border-white/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-transparent"></div>
           <div className="relative">
-            <div className="bg-black rounded-2xl p-8 md:p-12 border border-white/10">
+            <div className="bg-transparent rounded-2xl p-8 md:p-12 border border-white/10">
               <div className="flex flex-col md:flex-row items-center">
                 <div className="md:w-1/2 mb-8 md:mb-0">
                   <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">
@@ -115,7 +103,7 @@ export const FeaturesSection = () => {
                 </div>
                 <div className="md:w-1/2 md:pl-8">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/40 via-purple-600/40 to-green-600/40 rounded-xl transform rotate-2 scale-105 blur-2xl animate-gradient-pulse opacity-60"></div>
+                    <div className="absolute inset-0 rounded-xl transform rotate-2 scale-105 bg-transparent"></div>
                     <img
                       src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80"
                       alt="Integration visualization"

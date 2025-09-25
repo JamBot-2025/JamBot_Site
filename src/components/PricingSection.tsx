@@ -4,15 +4,8 @@ import { useNavigate } from 'react-router-dom';
 export const PricingSection = () => {
   const navigate = useNavigate();
   const features = ['5 projects', '10GB storage', 'Basic analytics', 'Email support', 'Access to all core features', 'Regular updates'];
-  return <section id="pricing" className="w-full bg-black py-20 relative overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/15 via-transparent to-blue-600/15 animate-gradient-shift blur-3xl opacity-60" style={{
-        animationDelay: '-10s'
-      }}></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 via-transparent to-green-600/10 animate-gradient-flow blur-2xl opacity-70" style={{
-        animationDelay: '-2s'
-      }}></div>
-      </div>
+  return <section id="pricing" className="w-full bg-transparent py-20 relative overflow-hidden">
+      {/* Background removed to let yellow show through */}
       <div className="container mx-auto px-4 relative">
         <div className="text-center mb-16 reveal-on-scroll">
           <div className="inline-block bg-gradient-to-r from-pink-500 to-purple-500 text-white text-sm font-bold py-2 px-4 rounded-full mb-6">
@@ -31,7 +24,7 @@ export const PricingSection = () => {
         </div>
         <div className="max-w-md mx-auto">
           <div
-            className="relative bg-black rounded-xl border border-purple-500 shadow-lg shadow-purple-500/10 transition-all hover-card reveal-on-scroll cursor-pointer"
+            className="relative bg-transparent rounded-xl border border-purple-500 shadow-lg shadow-purple-500/10 transition-all hover-card reveal-on-scroll cursor-pointer"
             role="button"
             tabIndex={0}
             onClick={() => navigate('/subscribe')}

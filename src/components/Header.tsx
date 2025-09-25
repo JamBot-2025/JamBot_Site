@@ -14,11 +14,15 @@ export const Header: React.FC<HeaderProps> = ({ user, authChecked }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="w-full bg-black sticky top-0 z-50 border-b border-gray-800">
+    <header className="w-full bg-transparent sticky top-0 z-50 border-b border-gray-800">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 bg-clip-text text-transparent">
-            AppName
+            <img
+              src="/jambot_icon.png"
+              alt="jambot_icon"
+              className="h-16 w-auto"
+            />
           </span>
         </div>
         {/* Desktop Navigation */}
@@ -62,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({ user, authChecked }) => {
       </div>
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden bg-black border-t border-gray-800">
+        <div className="md:hidden bg-transparent border-t border-gray-800">
           <div className="container mx-auto px-4 py-2 flex flex-col space-y-3">
             <a href="#features" className="py-2 text-white hover:text-blue-400 transition-colors">
               Features

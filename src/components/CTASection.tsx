@@ -5,16 +5,8 @@ export const CTASection = () => {
   const navigate = useNavigate();
 
   return (
-    <section id="contact" className="w-full bg-black py-20 text-white relative overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-bl from-blue-600/20 via-purple-600/15 to-green-600/20 animate-gradient-flow blur-3xl opacity-60"></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-pink-600/15 via-transparent to-orange-600/15 animate-gradient-shift blur-2xl opacity-70" style={{
-          animationDelay: '-15s'
-        }}></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-600/10 to-transparent animate-gradient-pulse blur-xl" style={{
-          animationDelay: '-5s'
-        }}></div>
-      </div>
+    <section id="contact" className="w-full bg-transparent py-20 text-white relative overflow-hidden">
+      {/* Background removed to let purple show through */}
       <div className="container mx-auto px-4 relative">
         <div className="max-w-3xl mx-auto text-center reveal-on-scroll">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
@@ -24,7 +16,7 @@ export const CTASection = () => {
             Join thousands of teams already using our platform to increase
             productivity and streamline operations.
           </p>
-          <div className="bg-black p-8 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300">
+          <div className="bg-transparent p-8 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300">
             <form
               className="flex flex-col md:flex-row gap-4"
               onSubmit={(e) => {
