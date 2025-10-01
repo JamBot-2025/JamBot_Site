@@ -25,17 +25,17 @@ export const FeaturesSection = () => {
   const features = [{
     icon: <ZapIcon size={24} className="text-green-500" />,
     title: 'Jam Along',
-    description: 'Our app is optimized for speed, ensuring you never wait for data to load or actions to complete.',
+    description: 'The only DAW that actually plays with you.',
     color: 'from-green-500 to-blue-500'
   }, {
     icon: <ZapIcon size={24} className="text-purple-500" />,
     title: 'Cowriter',
-    description: 'Powerful analytics tools to help you understand your performance and make data-driven decisions.',
+    description: 'Powerful AI bandmates listen to what your have and fill in the rest of the song with your choice of instrumentation.',
     color: 'from-purple-500 to-pink-500'
   }, {
     icon: <UsersIcon size={24} className="text-blue-500" />,
     title: 'Show your friends',
-    description: 'Work together seamlessly with your team members in real-time, no matter where they are.',
+    description: 'Pass along your creations to your band mates for them to learn and add to.',
     color: 'from-blue-500 to-indigo-500'
   }, {
     icon: <ShieldIcon size={24} className="text-pink-500" />,
@@ -68,7 +68,7 @@ export const FeaturesSection = () => {
           <p className="text-white/80">{feature.description}</p>
         </div>)}
       </div>
-      <div className="mt-20">
+      {/*<div className="mt-20">
         <div className="bg-transparent rounded-2xl p-8 md:p-12 border border-white/10 relative overflow-hidden">
           <div className="absolute inset-0 bg-transparent"></div>
           <div className="relative">
@@ -111,11 +111,11 @@ export const FeaturesSection = () => {
                     />
                   </div>
                 </div>
-              </div>
+              </div>*
             </div>
           </div>
         </div>
-      </div>
+      </div>*/}
     </div>
   </section>;
 };

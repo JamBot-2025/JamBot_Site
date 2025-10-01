@@ -4,7 +4,7 @@ export const FooterSection = () => {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-6 md:mb-0">
             <span className="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
-              AppName
+              JamBot
             </span>
           </div>
           <nav className="mb-6 md:mb-0">
@@ -15,19 +15,19 @@ export const FooterSection = () => {
                 </a>
               </li>
               <li>
-                <a href="#contact" className="hover:text-blue-400 transition-colors">
-                  Contact
+                <a href="#blog" className="hover:text-blue-400 transition-colors">
+                  Blog
                 </a>
               </li>
               <li>
-                <a href="#about" className="hover:text-blue-400 transition-colors">
-                  About Us
+                <a href="#contact" className="hover:text-blue-400 transition-colors">
+                  Contact
                 </a>
               </li>
             </ul>
           </nav>
           <div className="text-sm text-white/60">
-            &copy; {new Date().getFullYear()} AppName, Inc. All rights reserved.
+            &copy; {new Date().getFullYear()} Tunalea, Inc. All rights reserved.
           </div>
         </div>
       </div>

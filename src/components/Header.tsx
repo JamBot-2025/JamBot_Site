@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ user, authChecked }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="w-full bg-transparent sticky top-0 z-50 border-b border-gray-800">
+    <header className="w-full bg-transparent sticky top-0 z-50 border-b border-transparent">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 bg-clip-text text-transparent">
@@ -30,12 +30,19 @@ export const Header: React.FC<HeaderProps> = ({ user, authChecked }) => {
           <a href="/#features" className="text-white hover:text-blue-400 transition-colors">
             Features
           </a>
+          {/*}
           <a href="/#pricing" className="text-white hover:text-blue-400 transition-colors">
             Pricing
+          </a>
+          */}          
+          <a href="/#blog" className="text-white hover:text-blue-400 transition-colors">
+            Blog
           </a>
           <a href="/#contact" className="text-white hover:text-blue-400 transition-colors">
             Contact
           </a>
+
+          {/*}
           {!authChecked ? (
             // Skeleton to avoid flicker and prevent clicks before auth status is known
             <div className="w-32 h-9 rounded-lg bg-white/10 animate-pulse" aria-hidden />
@@ -54,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({ user, authChecked }) => {
             >
               Sign Up / Login
             </button>
-          )}
+          )} */}
         </nav>
         {/* Mobile menu button */}
         <button
@@ -76,6 +83,9 @@ export const Header: React.FC<HeaderProps> = ({ user, authChecked }) => {
             </a>
             <a href="#contact" className="py-2 text-white hover:text-blue-400 transition-colors">
               Contact
+            </a>
+            <a href="#blog" className="py-2 text-white hover:text-blue-400 transition-colors">
+              Blog
             </a>
             {!authChecked ? (
               // Mobile skeleton placeholder while auth is resolving

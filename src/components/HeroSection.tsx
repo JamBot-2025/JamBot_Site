@@ -6,7 +6,7 @@ export const HeroSection = () => {
   // const navigate = useNavigate(); // Commented out since not used
   return <section className="w-full bg-transparent py-20 relative">
       <div className="container mx-auto px-4 flex flex-col lg:flex-row items-center justify-between relative">
-        <div className="lg:w-1/2 mb-10 lg:mb-0">
+        <div className="lg:w-1/2 mb-10 lg:mb-0 lg:self-center">
           <img
             src="/jambot_logo.png"
             alt="jambot_logo"
@@ -16,7 +16,7 @@ export const HeroSection = () => {
             The AI-powered DAW, built for the browser. 
           </p>
           <h3 className="text-2xl text-white mx-auto text-center font-bold">
-            Launching 11/1/25
+            Launching 1/1/26
           </h3>
           {/* Buttons commented out
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
@@ -33,13 +33,13 @@ export const HeroSection = () => {
           </div>
           */}
         </div>
-        <div className="lg:w-1/2 flex justify-center">
-        <div className="relative w-full max-w-2xl">
+        <div className="lg:w-1/2 flex justify-center lg:self-center">
+        <div className="relative w-full max-w-2xl mt-12 lg:mt-24">
           <div className="absolute inset-0 rounded-xl rotate-3 scale-105 bg-black/30"></div>
 
           <div className="relative rounded-xl shadow-xl border border-white/10">
             <div className="overflow-hidden rounded-xl">
-              <div className="transform scale-[1] origin-center">
+              <div className="transform scale-[1] origin-center justify-center">
                 <img
                   src="/signal_screenshot.png"
                   alt="App screenshot"
