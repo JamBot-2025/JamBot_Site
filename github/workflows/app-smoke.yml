@@ -1,0 +1,25 @@
+name: App install smoke test
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions: {} # don't rely on default GITHUB_TOKEN perms
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create installation token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Prove the token works
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          gh api /rate_limit --jq '.rate' || (echo "API call failed" && exit 1)
+          echo "Installation ID: ${{ steps.app.outputs.installation-id }}"
+          echo "App slug:        ${{ steps.app.outputs.app-slug }}"
